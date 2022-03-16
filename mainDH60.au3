@@ -32,6 +32,7 @@ Global $DstYOffsetArray[5] = [0x88, 0x28, 0x6B4, 0x3C, 0x2C8]
 Global $DstXOffsetArray[5] = [0x88, 0x28, 0x708, 0xC, 0x2A8]
 Global $DstZOffsetArray[5] = [0x88, 0x28, 0x7C8, 0x1A4, 0x54]
 
+Global $g_listview
 Global $teleport_file = "favlist.fav"
 Global $DelLine = -1
 Global $log
@@ -189,7 +190,7 @@ Func Save($listview)
 EndFunc
 
 Func ReloadUI($listview)
-    InitListview($listview)
+    $g_listview = InitListview($listview)
 EndFunc
 
 Func GoHome()
@@ -200,9 +201,33 @@ Func GoHome()
     WritePosition($y, $x, $z)
 EndFunc
 
+Func HotKeyReg()
+	HotKeySet("!`", "HotKeyProcs")
+	HotKeySet("!1", "HotKeyProcs")
+	HotKeySet("!2", "HotKeyProcs")
+	HotKeySet("!3", "HotKeyProcs")
+EndFunc
+
+Func HotKeyProcs()
+	Switch @HotKeyPressed
+		Case "!1" ; 通灵学院-出口
+			Local $array[5] = [0,0,189.077,126.338,138.215]
+			WritePosition($array[3], $array[2], $array[4])
+		Case "!2" ; goHome
+			Local $array[5] = [0,0,-9458.8232, 43.626, 56.9500]
+			WritePosition($array[3], $array[2], $array[4])
+		Case "!3" ;通灵学院-入口
+			Local $array2[5] = [0,0,1276.4,-2552.52,89.225]
+			WritePosition($array2[3], $array2[2], $array2[4])
+		Case "!`"
+			Teleport($g_listview)
+	EndSwitch
+EndFunc
+
 Func LaunchUI()
-    Global $g_listview
     Local $button, $msg
+
+	HotKeyReg()
 
     $ui = GUICreate("Hack大荒60", 400, 850, 100, 200, -1, $WS_EX_ACCEPTFILES)
     GUISetBkColor(0x00E0FFFF) ; will change background color
@@ -222,7 +247,7 @@ Func LaunchUI()
 
     Global $input = GUICtrlCreateInput("",      10, 520, 210, 20)
     $log = GUICtrlCreateEdit("",                10, 610, 380, 220, BitOR($ES_AUTOVSCROLL, $WS_VSCROLL))
-    
+
     ;~ richEdit loaded too slow
     ;~ $log = _GUICtrlRichEdit_Create($ui, "", 10, 610, 380, 320, BitOR($ES_MULTILINE, $WS_VSCROLL, $ES_AUTOVSCROLL))
 
@@ -249,6 +274,7 @@ Func LaunchUI()
 EndFunc   ;==>Example
 
 
+
 Func OnClickListViewItem($hWnd, $Msg, $wParam, $lParam)
     Local $hWndFrom, $iIDFrom, $iCode, $tNMHDR, $listview
     $listview = $g_listview
@@ -269,14 +295,14 @@ Func OnClickListViewItem($hWnd, $Msg, $wParam, $lParam)
                         $retArr = _GUICtrlListView_GetItem($listview, $selectedLine, 0)
                         GUICtrlSetData($input, $retArr[3])
                         $DelLine = -1
-                        print("!> Click on item " & $iItem)
+                        ;~ print("!> Click on item " & $iItem)
                     EndIf
                 Case $NM_DBLCLK
                     Local $tInfo = DllStructCreate($tagNMLISTVIEW, $lParam)
                     Local $iItem = DllStructGetData($tInfo, "Item")
                     If $iItem <> -1 Then
                         TeleportDBClick($listview)
-                        print("!> DBClick on item " & $iItem)
+                        ;~ print("!> DBClick on item " & $iItem)
                     Endif
             EndSwitch
     EndSwitch
