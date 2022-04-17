@@ -47,5 +47,5 @@ Func TeleportDBClick($listview)
         Return
     EndIf
     $array = StringSplit($text, '|')
-    WritePosition($array[3], $array[2], $array[4])
+    TeleportInterface($array[2], $array[3], $array[4])
 EndFunc

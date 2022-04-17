@@ -14,6 +14,7 @@
 
 #include <Misc.au3>
 #include <file.au3>
+#include <math.au3>
 #include <WinAPI.au3>
 
 #include <NomadMemory.au3>
@@ -24,3 +25,6 @@
 #include <onWinMsg.au3>
 #include <hotkey.au3>
 #include <ui.au3>
+#include <bot/bot.au3>
+#include <bot/stsm.au3>
+#include <bot/bwl.au3>

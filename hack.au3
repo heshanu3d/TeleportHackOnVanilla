@@ -6,28 +6,28 @@ Func InitMemory()
     $WowProcessList = ProcessList($exe)
     $Wowpid1 = ProcessExists($exe)
     $dll = DllOpen("user32.dll")
-	Local $wowPidList = []
+
 	If UBound($WowProcessList) = 1 Then
 		MsgBox(0, "error", "please open exe first")
-		Return $wowPidList
+		Return
 	EndIf
     For $i = 1 to $WowProcessList[0][0]
         print("WoW pid:" & $WowProcessList[$i][1])
-		_ArrayAdd($wowPidList, $WowProcessList[$i][1])
+		_ArrayAdd($g_wowPidList, $WowProcessList[$i][1])
     Next
-	print("UBound($wowPidList)-1:" & UBound($wowPidList)-1)
-    For $i = 1 to UBound($wowPidList)-1
-        print("$wowPidList[" & $i & "]" & $wowPidList[$i])
+	print("UBound($g_wowPidList)-1:" & UBound($g_wowPidList)-1)
+    For $i = 1 to UBound($g_wowPidList)-1
+        print("$g_wowPidList[" & $i & "]" & $g_wowPidList[$i])
     Next
     $WowPid = $WowProcessList[1][1]
 	$g_selectPid = $Wowpid
+	$g_hwnd = _WinGetHandleByPidAndCls($g_selectPid, "GxWindowClassD3d")
     print("$WowPid:" & $WowPid)
 
     $g_singleWowProcess = _MemoryOpen($WowPid)
 
     print("Memory Initialize over")
     print("--------------------------------------------------------")
-	return $wowPidList
 EndFunc
 
 Func ReadPosition()
@@ -73,10 +73,10 @@ Func WritePositionSingle($x, $y, $z, $wowProcess)
     _MemoryWrite($addrY, $wowProcess, $y, 'float')
     _MemoryWrite($addrZ, $wowProcess, $z, 'float')
 
-    print("teleporting")
-    print("x : " & $x)
-    print("y : " & $y)
-    print("z : " & $z)
+    ; print("teleporting")
+    ; print("x : " & $x)
+    ; print("y : " & $y)
+    ; print("z : " & $z)
 EndFunc
 
 Func WritePosition($x, $y, $z)
@@ -90,6 +90,139 @@ Func WritePosition($x, $y, $z)
 			WritePositionSingle($x, $y, $z, $tmp)
 		Next
 	EndIf
+EndFunc
+
+Func AntiJump()
+	If $g_syncTeleport = False Then
+		$val = _MemoryRead($AntiJump, $g_singleWowProcess, 'byte')
+		;print("AntiJump val:" & $val)
+		;; 0x75 = 117
+		;; 0xEB = 235
+		If $val = 0x75 Then
+			print("set Antijump off")
+			_MemoryWrite($AntiJump, $g_singleWowProcess, 0xEB, 'byte')
+			SetJumpGravity(0.0)
+		ElseIf $val = 0xEB Then
+			print("set Antijump on")
+			_MemoryWrite($AntiJump, $g_singleWowProcess, 0x75, 'byte')
+			SetJumpGravity(-7.0)
+		EndIf
+	Else
+		print("not support in sync mode")
+	EndIf
+EndFunc
+
+Func SetJumpGravity($val)
+	print("JumpGravity val:" & _MemoryRead($JumpGravity, $g_singleWowProcess, 'float'))
+	_MemoryWrite($JumpGravity, $g_singleWowProcess, $val, 'float')
+	print("JumpGravity val:" & _MemoryRead($JumpGravity, $g_singleWowProcess, 'float'))
+EndFunc
+
+Func Autoloot()
+	print("start Autoloot function")
+	If $g_syncTeleport = False Then
+		$val_0 = _MemoryRead($autoloot_2, $g_singleWowProcess, 'byte')
+		$val_1 = _MemoryRead($autoloot_2+1, $g_singleWowProcess, 'byte')
+		print("$autoloot_2 $val_0:" & $val_0)
+		print("$autoloot_2 $val_1:" & $val_1)
+		;; 0x74 = 116
+		;; 0x10 = 16
+		If $val_0 = 0x74 and $val_1 = 0x10 Then
+			print("set Autoloot on")
+			_MemoryWrite($autoloot_2, $g_singleWowProcess, 0x90, 'byte')
+			_MemoryWrite($autoloot_2+1, $g_singleWowProcess, 0x90, 'byte')
+		ElseIf $val_0 = 0x90 and $val_1 = 0x90 Then
+			print("set Autoloot off")
+			_MemoryWrite($autoloot_2, $g_singleWowProcess, 0x74, 'byte')
+			_MemoryWrite($autoloot_2+1, $g_singleWowProcess, 0x10, 'byte')
+		Else
+			print("set Autoloot error")
+		EndIf
+	Else
+		print("not support in sync mode")
+	EndIf
+EndFunc
+
+Func PatchLoot()
+	If $g_syncTeleport = False Then
+		$val = _MemoryRead($patch_loot, 		$g_singleWowProcess, 'byte')
+		$val_2 = _MemoryRead($patch_loot2, 	  	$g_singleWowProcess, 'byte')
+		$val_3 = _MemoryRead($patch_lootslot, 	$g_singleWowProcess, 'byte')
+		print("$patch_loot $val:" & $val)
+		;; 0x72 = 114
+		;; 0xEB = 235
+		If $val = 0x72 and $val_2 = 0x72 and $val_3 = 1 Then
+			print("set PatchLoot on")
+			_MemoryWrite($patch_loot,  		$g_singleWowProcess, 0xEB, 'byte')
+			_MemoryWrite($patch_loot2, 		$g_singleWowProcess, 0xEB, 'byte')
+			_MemoryWrite($patch_lootslot, 	$g_singleWowProcess, 0x00, 'byte')
+		ElseIf $val = 0xEB and $val_2 = 0xEB and $val_3 = 0 Then
+			print("set PatchLoot off")
+			_MemoryWrite($patch_loot,  		$g_singleWowProcess, 0x72, 'byte')
+			_MemoryWrite($patch_loot2, 		$g_singleWowProcess, 0x72, 'byte')
+			_MemoryWrite($patch_lootslot, 	$g_singleWowProcess, 0x01, 'byte')
+		Else
+			print("set PatchLoot error")
+		EndIf
+	Else
+		print("not support in sync mode")
+	EndIf
+EndFunc
+
+Func LuaUnlock()
+	If $g_syncTeleport = False Then
+		$val_0 = _MemoryRead($luaUnlock+0, $g_singleWowProcess, 'byte')
+		$val_1 = _MemoryRead($luaUnlock+1, $g_singleWowProcess, 'byte')
+		$val_2 = _MemoryRead($luaUnlock+2, $g_singleWowProcess, 'byte')
+		$val_3 = _MemoryRead($luaUnlock+3, $g_singleWowProcess, 'byte')
+		$val_4 = _MemoryRead($luaUnlock+4, $g_singleWowProcess, 'byte')
+		$val_5 = _MemoryRead($luaUnlock+5, $g_singleWowProcess, 'byte')
+		print("$luaUnlock_0 $val:" & $val_0 &", "& $val_1&", "& $val_2&", "& $val_3&", "& $val_4&", "& $val_5)
+		If $val_0 = 0x56 and $val_1 = 0x8B and $val_2 = 0xF1 and $val_3 = 0x0F and $val_4 = 0x84 and $val_5 = 0xB1 Then
+			print("set LuaUnlock on")
+			_MemoryWrite($luaUnlock+0, $g_singleWowProcess, 0xB8, 'byte')
+			_MemoryWrite($luaUnlock+1, $g_singleWowProcess, 0x01, 'byte')
+			_MemoryWrite($luaUnlock+2, $g_singleWowProcess, 0x00, 'byte')
+			_MemoryWrite($luaUnlock+3, $g_singleWowProcess, 0x00, 'byte')
+			_MemoryWrite($luaUnlock+4, $g_singleWowProcess, 0x00, 'byte')
+			_MemoryWrite($luaUnlock+5, $g_singleWowProcess, 0xC3, 'byte')
+		ElseIf $val_0 = 0xB8 and $val_1 = 0x01 and $val_2 = 0x00 and $val_3 = 0x00 and $val_4 = 0x00 and $val_5 = 0xC3 Then
+			print("set LuaUnlock off")
+			_MemoryWrite($luaUnlock+0, $g_singleWowProcess, 0x56, 'byte')
+			_MemoryWrite($luaUnlock+1, $g_singleWowProcess, 0x8B, 'byte')
+			_MemoryWrite($luaUnlock+2, $g_singleWowProcess, 0xF1, 'byte')
+			_MemoryWrite($luaUnlock+3, $g_singleWowProcess, 0x0F, 'byte')
+			_MemoryWrite($luaUnlock+4, $g_singleWowProcess, 0x84, 'byte')
+			_MemoryWrite($luaUnlock+5, $g_singleWowProcess, 0xB1, 'byte')
+		EndIf
+	Else
+		print("not support in sync mode")
+	EndIf
+EndFunc
+
+Func Sync($func)
+	Local $ret = []
+	If BitAND(GUICtrlRead($g_syncTeleport), $GUI_CHECKED) = $GUI_CHECKED Then
+		For $i = 1 to UBound($g_wowPidList) - 1
+			_ArrayAdd($ret, $func($g_wowProcess[$i-1]))
+		Next
+	Else
+		_MemoryClose($g_selectPid)
+		For $i = 1 to UBound($g_wowPidList) - 1
+			$tmp = _MemoryOpen($g_wowPidList[$i])
+			_ArrayAdd($ret, $func($tmp))
+		Next
+		For $i = 1 to UBound($g_wowPidList) - 1
+			_MemoryClose($g_wowPidList[$i])
+		Next
+		$g_singleWowProcess = _MemoryOpen($g_selectPid)
+	EndIf
+	Return $ret
+EndFunc
+
+Func GetPlayerName($wowProcess)
+	$c_str = _MemoryRead($PlayerName, $wowProcess, 'byte[12]')
+	return _CodepageToString($c_str, 65001)
 EndFunc
 
 ;DWORD

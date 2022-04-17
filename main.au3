@@ -11,8 +11,22 @@ Global $CurrPosX = 0x00C7B548
 Global $CurrPosY = 0x00C7B544
 Global $CurrPosZ = 0x00C7B54C
 Global $StaticPlayer = 0x00C7BCD4
+Global $AntiJump = 0x7C625F
+Global $JumpGravity = 0x7C6272
+Global $PlayerName = 0xC27D88
+
+Global $autoloot_call = 0x4C1FA0
+Global $Script_LootSlot = 0x4C2E70
+Global $autoloot_2 = 0x4C1ECF ; write 2 nop to use autoloot
+Global $patch_loot = 0x4C21C0
+Global $patch_loot2 = 0x4C28FF
+Global $patch_lootslot = 0x4C2E94
+Global $luaUnlock = 0x494A57
+
 
 #include <include.au3>
 
-LaunchUI(InitMemory())
+InitMemory()
+HotKeyInit()
+LaunchUI()
 _MemoryClose($g_singleWowProcess)

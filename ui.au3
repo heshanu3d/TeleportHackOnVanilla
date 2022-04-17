@@ -1,11 +1,36 @@
-Func InitPidList($wowPidList)
-	$pidList = GUICtrlCreateList("", 250, 520, 120, 60)
+
+Func InitPidAndPlaynameList(ByRef $pidList, ByRef $playernameList)
+	If $pidList <> 0 Then
+		$WowProcessList = ProcessList($exe)
+		Local $wowPidList = []
+		For $i = 1 to $WowProcessList[0][0]
+			print("WoW pid:" & $WowProcessList[$i][1])
+			_ArrayAdd($wowPidList, $WowProcessList[$i][1])
+		Next
+		$g_wowPidList = $wowPidList
+		_GUICtrlListBox_Destroy($pidList)
+	EndIf
+	If $playernameList <> 0 Then
+		_GUICtrlListBox_Destroy($playernameList)
+	EndIf
+	$pidList = GUICtrlCreateList("", 250, 520, 60, 60, $LBS_DISABLENOSCROLL)
+	$playernameList = GUICtrlCreateList("", 310, 520, 60, 60, $LBS_DISABLENOSCROLL)
+
 	GUICtrlSetLimit($pidList, 200)
-	For $i = 1 to UBound($wowPidList) - 1
-		GUICtrlSetData($pidList, $wowPidList[$i])
-		print($wowPidList[$i])
+	GUICtrlSetLimit($playernameList, 200)
+	$playerNames = Sync(GetPlayerName)
+	If UBound($playerNames) <> UBound($g_wowPidList) Then
+		print("UBound($playerNames) <> UBound($g_wowPidList)")
+		Return
+	EndIf
+	For $i = 1 to UBound($g_wowPidList) - 1
+		GUICtrlSetData($pidList, $g_wowPidList[$i])
+		If $playerNames[$i] <> "" Then
+			GUICtrlSetData($playernameList, $playerNames[$i])
+		EndIf
+		;print($g_wowPidList[$i])
+		;print($playerNames[$i])
 	Next
-	return $pidList
 EndFunc
 
 Func InitListview($listview = 0)
@@ -49,13 +74,12 @@ Func GetListFd($op = $FO_READ)
     Return $fd
 EndFunc
 
-Func LaunchUI($wowPidList)
-	If UBound($wowPidList) = 1 Then
+Func LaunchUI()
+	If UBound($g_wowPidList) = 1 Then
 		Return
 	EndIf
-    Local $button, $msg
 
-	HotKeyReg()
+    Local $button, $msg
 
     $ui = GUICreate($winTitle, 400, 850, 100, 200, -1, $WS_EX_ACCEPTFILES)
     GUISetBkColor(0x00E0FFFF) ; will change background color
@@ -63,17 +87,20 @@ Func LaunchUI($wowPidList)
 
     $listview = InitListview()
     $g_listview = $listview
-	$input = GUICtrlCreateInput("",      10,  520, 210, 20)
-	$list = InitPidList($wowPidList)
-	$sync = GUICtrlCreateCheckbox("sync-teleport", 10, 550, 150, 20)
-	$farmEYun = GUICtrlCreateCheckbox("厄运",    170, 550, 50, 20)
+	$g_input = GUICtrlCreateInput("",      10,  520, 210, 20)
+	Local $pidList = 0
+	Local $playernameList = 0
+	InitPidAndPlaynameList($pidList, $playernameList)
+	$sync = GUICtrlCreateCheckbox("sync-tp", 	10,  550, 60, 20)
+	$step = GUICtrlCreateCheckbox("step-tp", 	90,  550, 60, 20)
+	$farmEYun = GUICtrlCreateCheckbox("厄运",    170, 550, 60, 20)
     $addPos = GUICtrlCreateButton("addPos",     10,  580, 70, 20)
     $editPos = GUICtrlCreateButton("editPos",   100, 580, 70, 20)
     $delPos = GUICtrlCreateButton("delPos",     190, 580, 70, 20)
 
     $teleport = GUICtrlCreateButton("Teleport", 280, 580, 100, 50)
 
-    $goHome = GUICtrlCreateButton("goHome",     10,  610, 70, 20)
+    $login = GUICtrlCreateButton("login",     10,  610, 70, 20)
     $save = GUICtrlCreateButton("save",         100, 610, 70, 20)
     $reload = GUICtrlCreateButton("reload",     190, 610, 70, 20)
 
@@ -86,26 +113,28 @@ Func LaunchUI($wowPidList)
     Do
         $msg = GUIGetMsg()
         Select
-            Case $msg = $goHome
-                GoHome()
+            Case $msg = $login
+                Login()
             Case $msg = $addPos
-                AddPos($input, $listview)
+                AddPos($g_input, $listview)
             Case $msg = $editPos
-                EditPos($input, $listview)
+                EditPos($g_input, $listview)
             Case $msg = $delPos
                 DelPos($listview)
             Case $msg = $save
                 Save($listview)
             Case $msg = $reload
-                ReloadUI($listview)
+                ReloadUI($listview, $pidList, $playernameList)
             Case $msg = $teleport
                 Teleport($listview)
 			Case $msg = $sync
-				SyncTeleport($sync, $wowPidList)
+				SyncTeleport($sync)
+			Case $msg = $step
+				StepCheckbox($step)
 			Case $msg = $farmEYun
 				FarmCheckbox($farmEYun)
-			Case $msg = $list
-				SelectSingleWowPid($list)
+			Case $msg = $pidList
+				SelectSingleWowPid($pidList)
         EndSelect
     Until $msg = $GUI_EVENT_CLOSE
 EndFunc
