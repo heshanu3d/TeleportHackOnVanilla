@@ -36,7 +36,7 @@ jobs:
            cd C:\"Program Files (x86)"\AutoIt3\Aut2Exe
            mkdir build
            cd C:\"Program Files (x86)"\AutoIt3\Aut2Exe\TeleportHackOnVanilla
-           $ver= git rev-list --count HEAD
+           $ver= git describe --abbrev=0 --tags
            cd C:\"Program Files (x86)"\AutoIt3\Aut2Exe\TeleportHackOnVanilla
            Move-Item "main.exe" C:\"Program Files (x86)"\AutoIt3\Aut2Exe\build
            cd C:\"Program Files (x86)"\AutoIt3\Aut2Exe
