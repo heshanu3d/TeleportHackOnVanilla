@@ -1,5 +1,4 @@
-"# TeleportHackOnVanilla" 
+"# TeleportHack On Vanilla and WLK" 
 
 - teleport hack
-  work on 大荒60, it's binary has been modified, so the static pointer should also be changed
-  provides a series of teleport coordinate
+  work on 1.12.1, 1.12.3, 3.3.5
