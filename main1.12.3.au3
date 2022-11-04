@@ -7,10 +7,7 @@
 
 Global $version = "1.12.3"
 Global $exe = "WoW.exe"
-;Global $exe = "WoW-HY.exe"
-;Global $exe = "天启魔兽.exe"
-;Global $exe = "WOW - 启航.exe"
-Global $winTitle = "1.12.3"
+Global $winTitle = "HackWow_1.12.3"
 Global $CurrPosX = 0x00C7FC64 ; 0x00C7B548
 Global $CurrPosY = 0x00C7FC68 ; 0x00C7B544
 Global $CurrPosZ = 0x00C7FC6C ; 0x00C7B54C
@@ -18,6 +15,13 @@ Global $StaticPlayer = 0x00C803F4 ; 0x00C7BCD4
 Global $AntiJump = 0x7C973F
 Global $JumpGravity = 0x7C9752
 Global $PlayerName = 0xC2C430
+
+Global $PbPointer1 = 0
+Global $PbPointer2 = 0
+Global $PosX = 0
+Global $PosY = 0
+Global $PosZ = 0
+Global $PosR = 0
 
 Global $autoloot_call = 0x4C2D90
 Global $Script_LootSlot = 0x4C3C60

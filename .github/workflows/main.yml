@@ -29,7 +29,11 @@ jobs:
     - name: Wrap Code
       run: |
            cd C:\"Program Files (x86)"\AutoIt3\Aut2Exe\TeleportHackOnVanilla
-           ../../AutoIt3.exe "C:\Program Files (x86)\AutoIt3\SciTE\AutoIt3Wrapper\AutoIt3Wrapper.au3" /NoStatus /prod /in "C:\Program Files (x86)\AutoIt3\Aut2Exe\TeleportHackOnVanilla\main.au3"
+           ../../AutoIt3.exe "C:\Program Files (x86)\AutoIt3\SciTE\AutoIt3Wrapper\AutoIt3Wrapper.au3" /NoStatus /prod /in "C:\Program Files (x86)\AutoIt3\Aut2Exe\TeleportHackOnVanilla\main1.12.1.au3"
+           Start-Sleep -s 10
+           ../../AutoIt3.exe "C:\Program Files (x86)\AutoIt3\SciTE\AutoIt3Wrapper\AutoIt3Wrapper.au3" /NoStatus /prod /in "C:\Program Files (x86)\AutoIt3\Aut2Exe\TeleportHackOnVanilla\main1.12.3.au3"
+           Start-Sleep -s 10
+           ../../AutoIt3.exe "C:\Program Files (x86)\AutoIt3\SciTE\AutoIt3Wrapper\AutoIt3Wrapper.au3" /NoStatus /prod /in "C:\Program Files (x86)\AutoIt3\Aut2Exe\TeleportHackOnVanilla\main3.3.5.au3"
            Start-Sleep -s 10
     - name: Rename and Aggregate Files
       run: |
@@ -38,10 +42,14 @@ jobs:
            cd C:\"Program Files (x86)"\AutoIt3\Aut2Exe\TeleportHackOnVanilla
            $ver= git describe --abbrev=0 --tags
            cd C:\"Program Files (x86)"\AutoIt3\Aut2Exe\TeleportHackOnVanilla
-           Move-Item "main.exe" C:\"Program Files (x86)"\AutoIt3\Aut2Exe\build
+           Move-Item "main1.12.1.exe" C:\"Program Files (x86)"\AutoIt3\Aut2Exe\build
+           Move-Item "main1.12.3.exe" C:\"Program Files (x86)"\AutoIt3\Aut2Exe\build
+           Move-Item "main3.3.5.exe" C:\"Program Files (x86)"\AutoIt3\Aut2Exe\build
            cd C:\"Program Files (x86)"\AutoIt3\Aut2Exe
            cd build
-           Rename-Item -Path "main.exe" -NewName TeleportOnVanilla-$ver.exe
+           Rename-Item -Path "main1.12.1.exe" -NewName Teleportors-1.12.1-$ver.exe
+           Rename-Item -Path "main1.12.3.exe" -NewName Teleportors-1.12.3-$ver.exe
+           Rename-Item -Path "main3.3.5.exe" -NewName Teleportors-3.3.5-$ver.exe
     - name: Upload
       uses: actions/upload-artifact@v2
       with:

@@ -7,12 +7,12 @@
 
 Global $version = "3.3.5"
 Global $exe = "WoW.exe"
-Global $winTitle = "HackWow_1.12"
-Global $CurrPosX = 0x00C7B548
-Global $CurrPosY = 0x00C7B544
-Global $CurrPosZ = 0x00C7B54C
-Global $AntiJump = 0x7C625F
-Global $JumpGravity = 0x7C6272
+Global $winTitle = "HackWow_3.3.5"
+Global $CurrPosX = 0
+Global $CurrPosY = 0
+Global $CurrPosZ = 0
+Global $AntiJump = 0
+Global $JumpGravity = 0
 
 Global $StaticPlayer = 0x00CD87A8
 Global $PlayerName = 0xC79D10+8
@@ -23,13 +23,13 @@ Global $PosY = 0x79C
 Global $PosZ = 0x7A0
 Global $PosR = 0x7A8
 
-Global $autoloot_call = 0x4C1FA0
-Global $Script_LootSlot = 0x4C2E70
-Global $autoloot_2 = 0x4C1ECF ; write 2 nop to use autoloot
-Global $patch_loot = 0x4C21C0
-Global $patch_loot2 = 0x4C28FF
-Global $patch_lootslot = 0x4C2E94
-Global $luaUnlock = 0x494A57
+Global $autoloot_call = 0
+Global $Script_LootSlot = 0
+Global $autoloot_2 = 0 ; write 2 nop to use autoloot
+Global $patch_loot = 0
+Global $patch_loot2 = 0
+Global $patch_lootslot = 0
+Global $luaUnlock = 0
 
 
 #include <include.au3>

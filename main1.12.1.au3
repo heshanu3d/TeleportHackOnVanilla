@@ -7,7 +7,7 @@
 
 Global $version = "1.12.1"
 Global $exe = "WoW.exe"
-Global $winTitle = "HackWow_1.12"
+Global $winTitle = "HackWow_1.12.1"
 Global $CurrPosX = 0x00C7B548
 Global $CurrPosY = 0x00C7B544
 Global $CurrPosZ = 0x00C7B54C
@@ -15,6 +15,13 @@ Global $StaticPlayer = 0x00C7BCD4
 Global $AntiJump = 0x7C625F
 Global $JumpGravity = 0x7C6272
 Global $PlayerName = 0xC27D88
+
+Global $PbPointer1 = 0
+Global $PbPointer2 = 0
+Global $PosX = 0
+Global $PosY = 0
+Global $PosZ = 0
+Global $PosR = 0
 
 Global $autoloot_call = 0x4C1FA0
 Global $Script_LootSlot = 0x4C2E70
