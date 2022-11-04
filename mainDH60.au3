@@ -5,6 +5,7 @@
 #AutoIt3Wrapper_Res_Language=2052
 #EndRegion ;**** Directives created by AutoIt3Wrapper_GUI ****
 
+Global $version = "1.12.3"
 Global $exe = "WoW.exe"
 ;Global $exe = "WoW-HY.exe"
 ;Global $exe = "天启魔兽.exe"

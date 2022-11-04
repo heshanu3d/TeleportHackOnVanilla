@@ -81,7 +81,7 @@ Func LaunchUI()
 
     Local $button, $msg
 
-    $ui = GUICreate($winTitle, 400, 850, 100, 200, -1, $WS_EX_ACCEPTFILES)
+    $ui = GUICreate($winTitle, 400, 880, 100, 200, -1, $WS_EX_ACCEPTFILES)
     GUISetBkColor(0x00E0FFFF) ; will change background color
     GUISetState(@SW_SHOW)
 
@@ -93,18 +93,20 @@ Func LaunchUI()
 	InitPidAndPlaynameList($pidList, $playernameList)
 	$sync = GUICtrlCreateCheckbox("sync-tp", 	10,  550, 60, 20)
 	$step = GUICtrlCreateCheckbox("step-tp", 	90,  550, 60, 20)
-	$farmEYun = GUICtrlCreateCheckbox("厄运",    170, 550, 60, 20)
+	$farmEYun = GUICtrlCreateCheckbox("厄运",   170, 550, 60, 20)
     $addPos = GUICtrlCreateButton("addPos",     10,  580, 70, 20)
     $editPos = GUICtrlCreateButton("editPos",   100, 580, 70, 20)
     $delPos = GUICtrlCreateButton("delPos",     190, 580, 70, 20)
 
     $teleport = GUICtrlCreateButton("Teleport", 280, 580, 100, 50)
 
-    $login = GUICtrlCreateButton("login",     10,  610, 70, 20)
+    $login = GUICtrlCreateButton("login",       10,  610, 70, 20)
     $save = GUICtrlCreateButton("save",         100, 610, 70, 20)
     $reload = GUICtrlCreateButton("reload",     190, 610, 70, 20)
 
-    $log = GUICtrlCreateEdit("",                10, 640, 380, 200, BitOR($ES_AUTOVSCROLL, $WS_VSCROLL))
+    $res = GUICtrlCreateButton("res",           10,  640, 70, 20) ;~ for combobox
+
+    $log = GUICtrlCreateEdit("",                10,  670, 380, 200, BitOR($ES_AUTOVSCROLL, $WS_VSCROLL))
 
     ;~ richEdit loaded too slow
     ;~ $log = _GUICtrlRichEdit_Create($ui, "", 10, 610, 380, 320, BitOR($ES_MULTILINE, $WS_VSCROLL, $ES_AUTOVSCROLL))

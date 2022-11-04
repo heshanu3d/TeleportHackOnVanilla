@@ -31,52 +31,78 @@ Func InitMemory()
 EndFunc
 
 Func ReadPosition()
-	If $g_syncTeleport = True Then
-		print("syncTeleport checkbox is on, cannot use readPostion function")
-		Return
-	EndIf
-    $CurrX=_MemoryRead($CurrPosX,$g_singleWowProcess,"float")
-    $CurrY=_MemoryRead($CurrPosY,$g_singleWowProcess,"float")
-    $CurrZ=_MemoryRead($CurrPosZ,$g_singleWowProcess,"float")
-    ;print("PointPosX : " & Hex($CurrPosX))
-    ;print("PointPosY : " & Hex($CurrPosY))
-    ;print("PointPosZ : " & Hex($CurrPosZ))
-    print("CurrPosX : " & $CurrX)
-    print("CurrPosY : " & $CurrY)
-    print("CurrPosZ : " & $CurrZ)
-    ;~ $R=_MemoryRead($Adr+$PosR,$g_singleWowProcess,"float")
-    Local $posArr[3] = [Round($CurrX, 3), Round($CurrY, 3), Round($CurrZ, 3)]
-    return $posArr
+    If $g_syncTeleport = True Then
+        print("syncTeleport checkbox is on, cannot use readPostion function")
+        Return
+    EndIf
+    If $version = "3.3.5" Then
+        Local $PB1 = _MemoryRead($StaticPlayer, $g_singleWowProcess, "Ptr")
+        Local $PB2 = _MemoryRead($PB1 + $PbPointer1, $g_singleWowProcess, "Ptr")
+        Local $PlayerBase = _MemoryRead($PB2 + $PbPointer2, $g_singleWowProcess, "Ptr")
+        ;~ $MapId = Round(_MemoryRead($MapID, $g_singleWowProcess, "dword"))
+        $CurrX = Round(_MemoryRead($PlayerBase + $PosX, $g_singleWowProcess, "float"), 3)
+        $CurrY = Round(_MemoryRead($PlayerBase + $PosY, $g_singleWowProcess, "float"), 3)
+        $CurrZ = Round(_MemoryRead($PlayerBase + $PosZ, $g_singleWowProcess, "float"), 3)
+        print("[335]CurrPosX : " & $CurrX)
+        print("CurrPosY : " & $CurrY)
+        print("CurrPosZ : " & $CurrZ)
+        ;~ $R=_MemoryRead($Adr+$PosR,$g_singleWowProcess,"float")
+        Local $posArr[3] = [Round($CurrX, 3), Round($CurrY, 3), Round($CurrZ, 3)]
+        return $posArr
+    Else
+        $CurrX = _MemoryRead($CurrPosX, $g_singleWowProcess, "float")
+        $CurrY = _MemoryRead($CurrPosY, $g_singleWowProcess, "float")
+        $CurrZ = _MemoryRead($CurrPosZ, $g_singleWowProcess, "float")
+        ;print("PointPosX : " & Hex($CurrPosX))
+        ;print("PointPosY : " & Hex($CurrPosY))
+        ;print("PointPosZ : " & Hex($CurrPosZ))
+        print("CurrPosX : " & $CurrX)
+        print("CurrPosY : " & $CurrY)
+        print("CurrPosZ : " & $CurrZ)
+        ;~ $R=_MemoryRead($Adr+$PosR,$g_singleWowProcess,"float")
+        Local $posArr[3] = [Round($CurrX, 3), Round($CurrY, 3), Round($CurrZ, 3)]
+        return $posArr
+    EndIf
 EndFunc
 
 Func WritePositionSingle($x, $y, $z, $wowProcess)
-    Local $addrX = $StaticPlayer
-    Local $addrY = $StaticPlayer
-    Local $addrZ = $StaticPlayer
+    If $version = "3.3.5" Then
+        Local $PB1 = _MemoryRead($StaticPlayer, $WowProcess, "Ptr")
+        Local $PB2 = _MemoryRead($PB1 + $PbPointer1, $WowProcess, "Ptr")
+        Local $PlayerBase = _MemoryRead($PB2 + $PbPointer2, $WowProcess, "Ptr")
+        ;~ $PlayerBase2 = _MemoryRead($PlayerBase + 8, $WowProcess,"Ptr")
+        _MemoryWrite($PlayerBase + $PosX, $WowProcess, $y, "float")
+        _MemoryWrite($PlayerBase + $PosY, $WowProcess, $x, "float")
+        _MemoryWrite($PlayerBase + $PosZ, $WowProcess, $z, "float")
+    Else
+        Local $addrX = $StaticPlayer
+        Local $addrY = $StaticPlayer
+        Local $addrZ = $StaticPlayer
 
-    ;~ print("$addrX : " & $addrX)
-    ;~ print("$addrY : " & $addrY)
-    ;~ print("$addrZ : " & $addrZ)
-
-    for $i = 0 to UBound($DstYOffsetArray) - 1
-        ;~ print("loop : " & $i)
-        ;~ print("$offset : " & $DstYOffsetArray[$i])
-        $addrX = _MemoryRead($addrX, $wowProcess) + $DstXOffsetArray[$i]
-        $addrY = _MemoryRead($addrY, $wowProcess) + $DstYOffsetArray[$i]
-        $addrZ = _MemoryRead($addrZ, $wowProcess) + $DstZOffsetArray[$i]
         ;~ print("$addrX : " & $addrX)
         ;~ print("$addrY : " & $addrY)
         ;~ print("$addrZ : " & $addrZ)
-    Next
 
-    _MemoryWrite($addrX, $wowProcess, $x, 'float')
-    _MemoryWrite($addrY, $wowProcess, $y, 'float')
-    _MemoryWrite($addrZ, $wowProcess, $z, 'float')
+        for $i = 0 to UBound($DstYOffsetArray) - 1
+            ;~ print("loop : " & $i)
+            ;~ print("$offset : " & $DstYOffsetArray[$i])
+            $addrX = _MemoryRead($addrX, $wowProcess) + $DstXOffsetArray[$i]
+            $addrY = _MemoryRead($addrY, $wowProcess) + $DstYOffsetArray[$i]
+            $addrZ = _MemoryRead($addrZ, $wowProcess) + $DstZOffsetArray[$i]
+            ;~ print("$addrX : " & $addrX)
+            ;~ print("$addrY : " & $addrY)
+            ;~ print("$addrZ : " & $addrZ)
+        Next
 
-    ; print("teleporting")
-    ; print("x : " & $x)
-    ; print("y : " & $y)
-    ; print("z : " & $z)
+        _MemoryWrite($addrX, $wowProcess, $x, 'float')
+        _MemoryWrite($addrY, $wowProcess, $y, 'float')
+        _MemoryWrite($addrZ, $wowProcess, $z, 'float')
+
+        ; print("teleporting")
+        ; print("x : " & $x)
+        ; print("y : " & $y)
+        ; print("z : " & $z)
+    EndIf
 EndFunc
 
 Func WritePosition($x, $y, $z)
