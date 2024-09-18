@@ -22,6 +22,7 @@ Global $PosX = 0
 Global $PosY = 0
 Global $PosZ = 0
 Global $PosR = 0
+Global $SpeedGlobal = 0
 
 Global $autoloot_call = 0x4C2D90
 Global $Script_LootSlot = 0x4C3C60

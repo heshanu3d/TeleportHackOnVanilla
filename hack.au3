@@ -43,7 +43,7 @@ Func ReadPosition()
         $CurrX = Round(_MemoryRead($PlayerBase + $PosX, $g_singleWowProcess, "float"), 3)
         $CurrY = Round(_MemoryRead($PlayerBase + $PosY, $g_singleWowProcess, "float"), 3)
         $CurrZ = Round(_MemoryRead($PlayerBase + $PosZ, $g_singleWowProcess, "float"), 3)
-        print("[335]CurrPosX : " & $CurrX)
+        print("CurrPosX : " & $CurrX)
         print("CurrPosY : " & $CurrY)
         print("CurrPosZ : " & $CurrZ)
         ;~ $R=_MemoryRead($Adr+$PosR,$g_singleWowProcess,"float")
@@ -278,3 +278,15 @@ EndFunc
 ;}
 ;
 ;Playerbase = ClntObjMgrObjectPtr(ClntObjMgrGetActivePlayer());
+
+func globalspeed()
+	If $version = "3.3.5" Then
+		Local $PB1 = _MemoryRead($StaticPlayer, $g_singleWowProcess, "Ptr")
+		Local $PB2 = _MemoryRead($PB1 + $PbPointer1, $g_singleWowProcess, "Ptr")
+		Local $PlayerBase = _MemoryRead($PB2 + $PbPointer2, $g_singleWowProcess, "Ptr")
+		;~ $PriveSpeedGlobaleInputed = GUICtrlRead($PriveSpeedGlobaleInput)
+		;~ _MemoryWrite($PlayerBase + $SpeedGlobale, $g_singleWowProcess, $PriveSpeedGlobaleInputed, "float")
+		_MemoryWrite($PlayerBase + $SpeedGlobal, $g_singleWowProcess, 7.0, "float")
+	Else
+	EndIf
+EndFunc

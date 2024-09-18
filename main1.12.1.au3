@@ -22,6 +22,7 @@ Global $PosX = 0
 Global $PosY = 0
 Global $PosZ = 0
 Global $PosR = 0
+Global $SpeedGlobal = 0
 
 Global $autoloot_call = 0x4C1FA0
 Global $Script_LootSlot = 0x4C2E70
@@ -30,7 +31,6 @@ Global $patch_loot = 0x4C21C0
 Global $patch_loot2 = 0x4C28FF
 Global $patch_lootslot = 0x4C2E94
 Global $luaUnlock = 0x494A57
-
 
 #include <include.au3>
 

@@ -11,17 +11,18 @@ Global $winTitle = "HackWow_3.3.5"
 Global $CurrPosX = 0
 Global $CurrPosY = 0
 Global $CurrPosZ = 0
+Global $StaticPlayer = 0x00CD87A8
 Global $AntiJump = 0
 Global $JumpGravity = 0
-
-Global $StaticPlayer = 0x00CD87A8
 Global $PlayerName = 0xC79D10+8
+
 Global $PbPointer1 = 0x34
 Global $PbPointer2 = 0x24
 Global $PosX = 0x798
 Global $PosY = 0x79C
 Global $PosZ = 0x7A0
 Global $PosR = 0x7A8
+Global $SpeedGlobal = 0x814
 
 Global $autoloot_call = 0
 Global $Script_LootSlot = 0
@@ -30,7 +31,6 @@ Global $patch_loot = 0
 Global $patch_loot2 = 0
 Global $patch_lootslot = 0
 Global $luaUnlock = 0
-
 
 #include <include.au3>
 

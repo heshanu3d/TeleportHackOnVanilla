@@ -51,7 +51,7 @@ jobs:
            Rename-Item -Path "main1.12.3.exe" -NewName Teleportors-1.12.3-$ver.exe
            Rename-Item -Path "main3.3.5.exe" -NewName Teleportors-3.3.5-$ver.exe
     - name: Upload
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v4
       with:
        name: TeleportOnVanilla
        path: C:\Program Files (x86)\AutoIt3\Aut2Exe\build
