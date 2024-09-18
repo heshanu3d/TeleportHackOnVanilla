@@ -232,3 +232,12 @@ Func SelectSingleWowPid($pidList)
 		print("syncTeleport Checkbox is on , specify single wow pid will not work")
 	EndIf
 EndFunc
+
+Func SwitchSpeed($speed_swi)
+	If BitAND(GUICtrlRead($speed_swi), $GUI_CHECKED) = $GUI_CHECKED Then
+		$speed = GUICtrlRead($g_speed)
+		GlobalSpeedSet($speed)
+	Else
+		GlobalSpeedSet(7.0)
+	EndIf
+EndFunc

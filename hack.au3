@@ -279,14 +279,14 @@ EndFunc
 ;
 ;Playerbase = ClntObjMgrObjectPtr(ClntObjMgrGetActivePlayer());
 
-func globalspeed()
+func GlobalSpeedSet($speed)
 	If $version = "3.3.5" Then
 		Local $PB1 = _MemoryRead($StaticPlayer, $g_singleWowProcess, "Ptr")
 		Local $PB2 = _MemoryRead($PB1 + $PbPointer1, $g_singleWowProcess, "Ptr")
 		Local $PlayerBase = _MemoryRead($PB2 + $PbPointer2, $g_singleWowProcess, "Ptr")
 		;~ $PriveSpeedGlobaleInputed = GUICtrlRead($PriveSpeedGlobaleInput)
 		;~ _MemoryWrite($PlayerBase + $SpeedGlobale, $g_singleWowProcess, $PriveSpeedGlobaleInputed, "float")
-		_MemoryWrite($PlayerBase + $SpeedGlobal, $g_singleWowProcess, 7.0, "float")
+		_MemoryWrite($PlayerBase + $SpeedGlobal, $g_singleWowProcess, $speed, "float")
 	Else
 	EndIf
 EndFunc

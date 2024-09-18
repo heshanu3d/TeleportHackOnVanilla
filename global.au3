@@ -6,6 +6,7 @@ Global $DstZOffsetArray[5] = [0x88, 0x28, 0x7C8, 0x1A4, 0x54]
 
 Global $g_listview
 Global $g_input
+Global $g_speed
 
 Global $g_singleWowProcess
 Global $g_wowProcess[10][2]

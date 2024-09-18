@@ -106,6 +106,9 @@ Func LaunchUI()
 
     $res = GUICtrlCreateButton("res",           10,  640, 70, 20) ;~ for combobox
 
+    $g_speed = GUICtrlCreateInput("",           100, 640, 35, 20)
+    $speed_swi = GUICtrlCreateCheckbox("speed", 135, 640, 60, 20)
+
     $log = GUICtrlCreateEdit("",                10,  670, 380, 200, BitOR($ES_AUTOVSCROLL, $WS_VSCROLL))
 
     ;~ richEdit loaded too slow
@@ -137,6 +140,8 @@ Func LaunchUI()
 				FarmCheckbox($farmEYun)
 			Case $msg = $pidList
 				SelectSingleWowPid($pidList)
+            Case $msg = $speed_swi
+                SwitchSpeed($speed_swi)
         EndSelect
     Until $msg = $GUI_EVENT_CLOSE
 EndFunc
