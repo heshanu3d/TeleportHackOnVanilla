@@ -3,6 +3,9 @@ Global $g_category_selected = "所有"
 Global $g_teleList_fuben[0]
 Global $g_teleList_arwsl[0]
 Global $g_teleList_city[0]
+Global $g_teleList_bfty[0]
+Global $g_teleList_lghy[0]
+Global $g_teleList_slcpd[0]
 Global $g_teleList_other[0]
 
 Func InitGlobalTeleportList()
@@ -10,6 +13,9 @@ Func InitGlobalTeleportList()
     Redim $g_teleList_fuben[0]
     Redim $g_teleList_arwsl[0]
     Redim $g_teleList_city[0]
+    Redim $g_teleList_bfty[0]
+    Redim $g_teleList_lghy[0]
+    Redim $g_teleList_slcpd[0]
     Redim $g_teleList_other[0]
 EndFunc
 
@@ -30,7 +36,6 @@ Func _Func_telelist($paramCnt, $_func, ByRef $teleList, $p1=0, $p2=0, $p3=0, $p4
         print("_Func_telelist function param is > 5, not supported now")
     EndIf
 EndFunc
-
 Func Func_telelist($cateText, $_func, $p1=0, $p2=0, $p3=0, $p4=0, $p5=0)
     Local $paramCnt = @NumParams - 2
     ;~ print("paramCnt " & $paramCnt)
@@ -42,6 +47,12 @@ Func Func_telelist($cateText, $_func, $p1=0, $p2=0, $p3=0, $p4=0, $p5=0)
         return _Func_telelist($paramCnt, $_func, $g_teleList_arwsl, $p1, $p2, $p3, $p4, $p5)
     ElseIf $cateText = "主城" Then
         return _Func_telelist($paramCnt, $_func, $g_teleList_city,  $p1, $p2, $p3, $p4, $p5)
+    ElseIf $cateText = "北风苔原" Then
+        return _Func_telelist($paramCnt, $_func, $g_teleList_bfty,  $p1, $p2, $p3, $p4, $p5)
+    ElseIf $cateText = "龙骨荒野" Then
+        return _Func_telelist($paramCnt, $_func, $g_teleList_lghy,  $p1, $p2, $p3, $p4, $p5)
+    ElseIf $cateText = "索拉查盆地" Then
+        return _Func_telelist($paramCnt, $_func, $g_teleList_slcpd,  $p1, $p2, $p3, $p4, $p5)
     Else
         $cateText = "其他"
         If $_func = _GenTeleListByCategory Then
@@ -49,6 +60,22 @@ Func Func_telelist($cateText, $_func, $p1=0, $p2=0, $p3=0, $p4=0, $p5=0)
         EndIf
         return _Func_telelist($paramCnt, $_func, $g_teleList_other, $p1, $p2, $p3, $p4, $p5)
     Endif
+EndFunc
+
+Func _InsertPos_telelist(ByRef $teleList, $selectedLine, $text, $currPosArr)
+    $columnCount = _GUICtrlListView_GetColumnCount($g_listview)
+    _ArrayInsert($teleList, $selectedLine*$columnCount, $text)
+    ;~ print(" insert " & $text & " UBound($teleList) is " & UBound($teleList))
+    For $i = 1 to $columnCount - 1
+        _ArrayInsert($teleList, $selectedLine*$columnCount+$i, $currPosArr[$i-1])
+        ;~ print(" insert " & $currPosArr[$i-1] & " UBound($teleList) is " & UBound($teleList))
+    Next
+    ;~ For $i = 0 to UBound($teleList) - 1
+    ;~     print($i & " teleList " & $teleList[$i])
+    ;~ Next
+EndFunc
+Func InsertPos_telelist($cateText, $selectedLine, $text, $currPosArr)
+    Func_telelist($cateText, _InsertPos_telelist, $selectedLine, $text, $currPosArr)
 EndFunc
 
 Func _AddPos_telelist(ByRef $teleList, $text, $currPosArr)

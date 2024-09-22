@@ -25,7 +25,7 @@ Global $g_startBot = False
 Global $teleport_file = "favlist.fav"
 Global $hotkey_file = "hotkey.txt"
 Global $DelLine = -1
-Global $log
+Global $g_log
 
 
 Global $hotkeyRegFromFileConfigArrayMaxLen = 50

@@ -116,6 +116,19 @@ Func Teleport($listview)
     TeleportInterface($array[2], $array[3], $array[4])
 EndFunc
 
+Func InsertPos($input, $listview, $cateText)
+    $currPosArr = ReadPosition()
+    $text = GUICtrlRead($input)
+	$selectedLine = _GUICtrlListView_GetSelectedIndices($listview)
+    ;~ print($text)
+    ;~ GUICtrlCreateListViewItem($text, $listview)
+	_GUICtrlListView_InsertItem($listview, $text, $selectedLine)
+	For $i = 1 to _GUICtrlListView_GetColumnCount($listview) - 1
+		_GUICtrlListView_SetItemText($listview, $selectedLine, $currPosArr[$i-1], $i)
+	Next
+	InsertPos_telelist($cateText, $selectedLine, $text, $currPosArr)
+EndFunc
+
 Func AddPos($input, $listview, $cateText)
     $currPosArr = ReadPosition()
     $text = GUICtrlRead($input)

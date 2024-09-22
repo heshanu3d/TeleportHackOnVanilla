@@ -185,7 +185,7 @@ Func LaunchUI()
 
     $teleport = GUICtrlCreateButton("Teleport", 280, 580, 100, 50)
 
-    $login = GUICtrlCreateButton("login",       10,  610, 70, 20)
+    $insertPos =GUICtrlCreateButton("insertPos",10,  610, 70, 20)
     $save = GUICtrlCreateButton("save",         100, 610, 70, 20)
     $reload = GUICtrlCreateButton("reload",     190, 610, 70, 20)
 
@@ -194,10 +194,12 @@ Func LaunchUI()
     $g_speed = GUICtrlCreateInput("",           100, 640, 35, 20)
     $speed_swi = GUICtrlCreateCheckbox("speed", 135, 640, 60, 20)
 
-    $log = GUICtrlCreateEdit("",                10,  670, 380, 200, BitOR($ES_AUTOVSCROLL, $WS_VSCROLL))
+    $login = GUICtrlCreateButton("login",       190, 640, 70, 20)
+
+    $g_log = GUICtrlCreateEdit("",                10,  670, 380, 200, BitOR($ES_AUTOVSCROLL, $WS_VSCROLL))
 
     ;~ richEdit loaded too slow
-    ;~ $log = _GUICtrlRichEdit_Create($ui, "", 10, 610, 380, 320, BitOR($ES_MULTILINE, $WS_VSCROLL, $ES_AUTOVSCROLL))
+    ;~ $g_log = _GUICtrlRichEdit_Create($ui, "", 10, 610, 380, 320, BitOR($ES_MULTILINE, $WS_VSCROLL, $ES_AUTOVSCROLL))
 
     GUIRegisterMsg($WM_NOTIFY, "WM_NOTIFY")
     Do
@@ -205,6 +207,8 @@ Func LaunchUI()
         Select
             Case $msg = $login
                 Login()
+            Case $msg = $insertPos
+                InsertPos($g_input, $listview, GUICtrlRead($comboBox))
             Case $msg = $addPos
                 AddPos($g_input, $listview, GUICtrlRead($comboBox))
             Case $msg = $editPos

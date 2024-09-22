@@ -81,7 +81,7 @@ Func STSM()
 			; 1，表示不可整除
 			; 2，表示可整除
 			; -1 并设置 @error = 1，表示给定的数字无效
-			_GUICtrlEdit_SetText($log, "") ; 定期清理日志
+			_GUICtrlEdit_SetText($g_log, "") ; 定期清理日志
 		EndIf
 		print("第" & $i & "次挂机")
 		ControlSend ( $g_hwnd, "", "", "{R}")
@@ -115,7 +115,7 @@ Func STSM_DK()
 			; 1，表示不可整除
 			; 2，表示可整除
 			; -1 并设置 @error = 1，表示给定的数字无效
-			_GUICtrlEdit_SetText($log, "") ; 定期清理日志
+			_GUICtrlEdit_SetText($g_log, "") ; 定期清理日志
 		EndIf
 		print("第" & $i & "次挂机")
 		ControlSend ( $g_hwnd, "", "", "{R}")

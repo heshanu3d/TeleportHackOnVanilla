@@ -3,6 +3,7 @@
 #Region ;**** Directives created by AutoIt3Wrapper_GUI ****
 #AutoIt3Wrapper_UseX64=n
 #AutoIt3Wrapper_Res_Language=2052
+#AutoIt3Wrapper_Icon="icon.ico"
 #EndRegion ;**** Directives created by AutoIt3Wrapper_GUI ****
 
 Global $version = "1.12.3"

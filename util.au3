@@ -1,6 +1,12 @@
+Global $logLineCnt = 0
 Func print($content)
-    ;~ _GUICtrlRichEdit_AppendText($log, $content & @CR)
-    _GUICtrlEdit_AppendText($log, $content & @CRLF)
+    ;~ _GUICtrlRichEdit_AppendText($g_log, $content & @CR)
+    $logLineCnt = $logLineCnt + 1
+    If $logLineCnt > 80 Then
+        _GUICtrlEdit_SetText($g_log, "")
+        $logLineCnt = 0
+    EndIf
+    _GUICtrlEdit_AppendText($g_log, $content & @CRLF)
     ConsoleWrite($content & @CR)
 EndFunc
 
