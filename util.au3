@@ -143,3 +143,13 @@ Func Utf82Unicode($Utf8String)
     $Buffer = 0
     Return $UnicodeString
 EndFunc
+
+Func Set_Add(ByRef $set, $value)
+    If _ArraySearch($set, $value, 0, False, -1) = -1 Then
+        _ArrayAdd($set, $value)
+    EndIf
+EndFunc
+
+Func Set_Contains(ByRef $set, $value)
+    Return _ArraySearch($set, $value, 0, False, -1) <> -1
+EndFunc

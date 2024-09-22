@@ -33,37 +33,119 @@ Func InitPidAndPlaynameList(ByRef $pidList, ByRef $playernameList)
 	Next
 EndFunc
 
-Func InitListview($listview = 0)
-    If $listview = 0 Then
-        print("launch ui")
-    Else
-        GUICtrlDelete($listview)
-        print("reload")
-    Endif
+Func InitTeleportList()
+    InitGlobalTeleportList()
+    $teleList_whole = FileReadToArray($teleport_file)
+    $g_lineCount = @extended
+    print("$g_lineCount : " & $g_lineCount)
+    $columnCount = 4
+    Local $category[0]
 
-    $listview = GUICtrlCreateListView("        描述        |      x      |      y      |      z      ", 10, 10, 380, 500)
-    $g_listview = $listview
-    $columnCount = _GUICtrlListView_GetColumnCount($listview)
-
-
-    Local $tpInfoArray = FileReadToArray($teleport_file)
-    Local $lineCount = @extended
-    print("$lineCount : " & $lineCount)
+    Local $set[0]
     If @error Then
         MsgBox($MB_SYSTEMMODAL, "", "There was an error reading the file. @error: " & @error)
     Else
         Local $i = 0
-        While $i + $columnCount-1 < $lineCount
-            $text = $tpInfoArray[$i]
-            For $c = 1 to $columnCount - 1
-                $text = $text & "|" & $tpInfoArray[$i+$c]
-            Next
-            $i = $i + $columnCount
-            GUICtrlCreateListViewItem($text, $listview)
+        While $i < $g_lineCount
+        ;~ While $i + $columnCount-1 < $g_lineCount
+            Local $text = $teleList_whole[$i]
+            Local $split = StringSplit($text, $g_telelist_split_str)
+            ;~ print($i & " UBound($split) is " & UBound($split) & "------" & $split[0] & ", " & $split[1])
+            ;~ StringSplit 返回值的第一个元素是数组的个数(即 : 分割的数量+1)
+            If UBound($split) - 1 = $columnCount Then
+                ;~ print("UBound($split) is " & $columnCount)
+
+                Local $telePointText[0]
+                For $j = 1 To $split[0]
+                    _ArrayAdd($telePointText, $split[$j])
+                    ;~ print($j & " Add " & $split[$j])
+                Next
+
+                ;~ Local $telePointText = StringReplace($text, $g_telelist_split_str, "|")
+
+                Local $textsplit = StringSplit($split[1], "-")
+    
+                If $textsplit[0] > 0 Then
+                    $text = $textsplit[1] ; 获取"-"前面的部分
+                EndIf
+
+                $category = GenTeleListByCategory($category, $text, $telePointText)
+                $category = GenTeleListByCategory($category, "所有", $telePointText)
+                ;~ _ArrayAdd($g_teleList_whole, $telePointText)
+                ;~ print("UBound($g_teleList_whole) is " & UBound($g_teleList_whole))
+                $i = $i + 1
+            Else
+                If $i + $columnCount-1 >= $g_lineCount Then
+                    ExitLoop
+                EndIf
+
+                Local $telePointText = $text
+                For $c = 1 to $columnCount - 1
+                    $telePointText = $telePointText & "|" & $teleList_whole[$i+$c]
+                Next
+                ;~ print($telePointText)
+
+                Local $textsplit = StringSplit($text, "-")
+
+                If $textsplit[0] > 0 Then
+                    $text = $textsplit[1] ; 获取"-"前面的部分
+                EndIf
+
+                $category = GenTeleListByCategory($category, $text, $telePointText)
+                $category = GenTeleListByCategory($category, "所有", $telePointText)
+                ;~ print("UBound($g_teleList_whole) is " & UBound($g_teleList_whole))
+                $i = $i + $columnCount
+            EndIf
         WEnd
     EndIf
 
-    return $listview
+    ;~ For $i = 0 to UBound($category) - 1
+    ;~     print("category " & $category[$i])
+    ;~ Next
+
+    return $category
+EndFunc
+
+Func InitListview($listview = 0)
+    If $listview = 0 Then
+        print("launch ui")
+        ;~ refactor
+        $listview = GUICtrlCreateListView("        描述        |      x      |      y      |      z      ", 10, 20, 380, 490)
+        GUICtrlSendMsg($listview, $LVM_SETCOLUMNWIDTH, 0, 250)
+        $g_listview = $listview
+    Else
+        ;~ refactor
+        ;~ GUICtrlDelete($listview)
+        ;~ GUICtrlSendMsg($listview, $LVM_SCROLL, 0, 0)
+        _GUICtrlListView_Scroll($listview, 0, -10000)
+        _GUICtrlListView_DeleteAllItems($listview)
+        print("reload")
+    Endif
+
+    return SwitchListviewWithCategory($g_category_selected)
+EndFunc
+
+Func InitComboBox(Byref $category, $comboBox = 0)
+    If $comboBox = 0 Then
+        $comboBox = GUICtrlCreateCombo("所有", 10, 00, 180, 20)
+    Else
+        ;~ print("InitComboBox combobox delete start  with " & _GUICtrlComboBox_GetCount($comboBox))
+        For $i = _GUICtrlComboBox_GetCount($comboBox) - 1 to 0 Step - 1
+            _GUICtrlComboBox_DeleteString($comboBox, $i)
+            ;~ print("InitComboBox combobox delete " & $i)
+        Next
+        GUICtrlSetData($comboBox, "所有")
+    EndIf
+
+    Local $i
+    For $i = 0 to UBound($category) - 1
+        GUICtrlSetData($comboBox, $category[$i])
+    Next
+
+    ;~ _GUICtrlComboBox_SetCurSel($comboBox, 0)
+    _GUICtrlComboBox_SelectString($comboBox, $g_category_selected)
+
+    return $comboBox
 EndFunc
 
 Func GetListFd($op = $FO_READ)
@@ -79,11 +161,14 @@ Func LaunchUI()
 		Return
 	EndIf
 
-    Local $button, $msg
-
     $ui = GUICreate($winTitle, 400, 880, 100, 200, -1, $WS_EX_ACCEPTFILES)
     GUISetBkColor(0x00E0FFFF) ; will change background color
     GUISetState(@SW_SHOW)
+    
+    ;~ read teleport points from file
+    Local $category = InitTeleportList()
+
+    $comboBox = InitComboBox($category)
 
     $listview = InitListview()
     $g_listview = $listview
@@ -121,15 +206,15 @@ Func LaunchUI()
             Case $msg = $login
                 Login()
             Case $msg = $addPos
-                AddPos($g_input, $listview)
+                AddPos($g_input, $listview, GUICtrlRead($comboBox))
             Case $msg = $editPos
-                EditPos($g_input, $listview)
+                EditPos($g_input, $listview, GUICtrlRead($comboBox))
             Case $msg = $delPos
-                DelPos($listview)
+                DelPos($listview, GUICtrlRead($comboBox))
             Case $msg = $save
-                Save($listview)
+                Save($listview, $comboBox)
             Case $msg = $reload
-                ReloadUI($listview, $pidList, $playernameList)
+                ReloadUI($listview, $comboBox, $pidList, $playernameList)
             Case $msg = $teleport
                 Teleport($listview)
 			Case $msg = $sync
@@ -142,6 +227,8 @@ Func LaunchUI()
 				SelectSingleWowPid($pidList)
             Case $msg = $speed_swi
                 SwitchSpeed($speed_swi)
+            Case $msg = $comboBox
+                SwitchListview(GUICtrlRead($comboBox))
         EndSelect
     Until $msg = $GUI_EVENT_CLOSE
 EndFunc

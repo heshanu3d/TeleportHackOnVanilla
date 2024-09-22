@@ -17,10 +17,13 @@
 #include <math.au3>
 #include <WinAPI.au3>
 
+#include <Array.au3>
+
 #include <NomadMemory.au3>
 #include <global.au3>
 #include <util.au3>
 #include <hack.au3>
+#include <category.au3>
 #include <onMsg.au3>
 #include <onWinMsg.au3>
 #include <hotkey.au3>

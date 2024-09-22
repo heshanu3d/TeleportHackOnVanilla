@@ -1,4 +1,5 @@
 Func InitMemory()
+    print("------  Autoit3 : "& @AutoItVersion &"  -------")
     print("--------------------------------------------------------")
 	print("Memory Initializing")
 

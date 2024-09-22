@@ -116,15 +116,17 @@ Func Teleport($listview)
     TeleportInterface($array[2], $array[3], $array[4])
 EndFunc
 
-Func AddPos($input, $listview)
+Func AddPos($input, $listview, $cateText)
     $currPosArr = ReadPosition()
     $text = GUICtrlRead($input)
     $text = $text &"|"& $currPosArr[0] &"|"& $currPosArr[1] &"|"& $currPosArr[2]
     ;~ print($text)
     GUICtrlCreateListViewItem($text, $listview)
+	;~ AddPos_telelist($cateText, $text, $currPosArr)
+	AddPos_telelist($cateText, $text, $currPosArr)
 EndFunc
 
-Func EditPos($input, $listview)
+Func EditPos($input, $listview, $cateText)
     $currPosArr = ReadPosition()
     $text = GUICtrlRead($input)
     $selectedLine = _GUICtrlListView_GetSelectedIndices($listview)
@@ -132,9 +134,11 @@ Func EditPos($input, $listview)
     _GUICtrlListView_SetItem($listview, $currPosArr[0], $selectedLine, 1)
     _GUICtrlListView_SetItem($listview, $currPosArr[1], $selectedLine, 2)
     _GUICtrlListView_SetItem($listview, $currPosArr[2], $selectedLine, 3)
+	;~ EditPos_telelist($cateText, $selectedLine, $text, $currPosArr)
+	EditPos_telelist($cateText, $selectedLine, $text, $currPosArr)
 EndFunc
 
-Func DelPos($listview)
+Func DelPos($listview, $cateText)
     ;~ print("$DelLine : " & $DelLine)
     Local $selectedLine
     If $DelLine <> -1 Then
@@ -144,9 +148,12 @@ Func DelPos($listview)
         $selectedLine = _GUICtrlListView_GetSelectedIndices($listview)
     EndIf
     _GUICtrlListView_DeleteItem($listview, $selectedLine)
+	DelPos_telelist($cateText, $selectedLine)
+	;~ print("delete " & $selectedLine)
     $lineCount = _GUICtrlListView_GetItemCount($listview)
     if $selectedLine > $lineCount - 1 Then
         _GUICtrlListView_SetItemSelected($listview, $selectedLine - 1)
+		;~ print("select " & $selectedLine - 1)
     ElseIf $lineCount = 0 Then
         Return
     Else
@@ -154,7 +161,7 @@ Func DelPos($listview)
     EndIf
 EndFunc
 
-Func Save($listview)
+Func SaveOld($listview)
     $lineCount = _GUICtrlListView_GetItemCount($listview)
     $columnCount = _GUICtrlListView_GetColumnCount($listview)
     $fd = GetListFd($FO_OVERWRITE + $FO_CREATEPATH)
@@ -171,8 +178,66 @@ Func Save($listview)
 	FileClose($fd)
 EndFunc
 
-Func ReloadUI($listview, ByRef $list, ByRef $playernameList)
-    $g_listview = InitListview($listview)
+Func SaveFromList(ByRef $telelist, ByRef $pointCnt, $fd)
+	Local $i = 0
+	$columnCount = _GUICtrlListView_GetColumnCount($g_listview)
+	While $i < UBound($telelist)
+		Local $telePointText = $telelist[$i]
+		For $c = 1 to $columnCount - 1
+			$telePointText = $telePointText & $g_telelist_split_str & $telelist[$i+$c]
+		Next
+
+		FileWriteLine($fd, $telePointText)
+		$pointCnt = $pointCnt + 1
+
+		$i = $i + $columnCount
+	WEnd
+EndFunc
+
+Func Save($listview, $comboBox)
+	$cateText = GUICtrlRead($comboBox)
+    $fd = GetListFd($FO_OVERWRITE + $FO_CREATEPATH)
+    If $fd = -1 Then
+        print("An error occurred when opening the file.")
+    EndIf
+
+	Local $pointCnt = 0
+
+	If $cateText = "所有" Then
+		$telelist = Save_telelist($catetext)
+		SaveFromList($telelist, $pointCnt, $fd)
+		;~ Local $i = 0
+		;~ While $i < UBound($telelist)
+		;~ 	Local $telePointText = $telelist[$i]
+		;~ 	For $c = 1 to $columnCount - 1
+		;~ 		$telePointText = $telePointText & $g_telelist_split_str & $telelist[$i+$c]
+		;~ 	Next
+	
+		;~ 	FileWriteLine($fd, $telePointText)
+		;~ 	$pointCnt = $pointCnt + 1
+	
+		;~ 	$i = $i + $columnCount
+		;~ WEnd
+	Else
+		$list = _GUICtrlComboBox_GetListArray($comboBox)
+		;~ $list[0] is value of UBound($list)-1
+		For $i = 2 to $list[0]
+			;~ print("save " & $i & " " & $list[$i])
+			$telelist = Save_telelist($list[$i])
+			SaveFromList($telelist, $pointCnt, $fd)
+		Next
+	EndIf
+
+
+    print("saved " & $pointCnt & " teleports")
+	FileClose($fd)
+EndFunc
+
+Func ReloadUI($listview, $comboBox, ByRef $list, ByRef $playernameList)
+    Local $category = InitTeleportList()
+    InitComboBox($category, $comboBox)
+
+	$g_listview = InitListview($listview)
 	InitPidAndPlaynameList($list, $playernameList)
 EndFunc
 
@@ -239,5 +304,12 @@ Func SwitchSpeed($speed_swi)
 		GlobalSpeedSet($speed)
 	Else
 		GlobalSpeedSet(7.0)
+	EndIf
+EndFunc
+
+Func SwitchListview($category)
+	If $g_category_selected <> $category Then
+		$g_category_selected = $category
+		SwitchListviewWithCategory($category)
 	EndIf
 EndFunc

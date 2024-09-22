@@ -65,6 +65,7 @@ Func HotKeyRegFromConfigFile()
     Local $tpInfoArrayCount = @extended
 	If @error Then
         MsgBox($MB_SYSTEMMODAL, "", "There was an error reading tp file. @error: " & @error)
+		$fileHandle = FileOpen($teleport_file, $FO_OVERWRITE)
 		Return
 	EndIf
 
