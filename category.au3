@@ -5,6 +5,7 @@ Global $g_teleList_arwsl[0]
 Global $g_teleList_city[0]
 Global $g_teleList_bfty[0]
 Global $g_teleList_lghy[0]
+Global $g_teleList_zdk[0]
 Global $g_teleList_slcpd[0]
 Global $g_teleList_other[0]
 
@@ -15,6 +16,7 @@ Func InitGlobalTeleportList()
     Redim $g_teleList_city[0]
     Redim $g_teleList_bfty[0]
     Redim $g_teleList_lghy[0]
+    Redim $g_teleList_zdk[0]
     Redim $g_teleList_slcpd[0]
     Redim $g_teleList_other[0]
 EndFunc
@@ -51,6 +53,8 @@ Func Func_telelist($cateText, $_func, $p1=0, $p2=0, $p3=0, $p4=0, $p5=0)
         return _Func_telelist($paramCnt, $_func, $g_teleList_bfty,  $p1, $p2, $p3, $p4, $p5)
     ElseIf $cateText = "龙骨荒野" Then
         return _Func_telelist($paramCnt, $_func, $g_teleList_lghy,  $p1, $p2, $p3, $p4, $p5)
+    ElseIf $cateText = "祖达克" Then
+        return _Func_telelist($paramCnt, $_func, $g_teleList_zdk,   $p1, $p2, $p3, $p4, $p5)
     ElseIf $cateText = "索拉查盆地" Then
         return _Func_telelist($paramCnt, $_func, $g_teleList_slcpd,  $p1, $p2, $p3, $p4, $p5)
     Else

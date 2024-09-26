@@ -40,13 +40,19 @@ Func TeleportInterface($x, $y, $z)
 	If $g_step = True Then
 		TeleportStepByStep($x, $y, $z)
 	Else
-		WritePosition($y, $x, $z)
+		If $version = "3.3.5" and $version = "1.12.3" Then
+			WritePosition($y, $x, $z)
+		ElseIf $version = "1.12.1" Then
+			WritePosition($x, $y, $z)
+		EndIf
 		Sleep(40)
 		;Send("{Left}")
-		ControlSend ( $g_hwnd, "", "", "{Left}")
-		Sleep(30)
-		ControlSend ( $g_hwnd, "", "", "{Right}")
-		Sleep(30)
+		If $g_fastStep = False Then
+			ControlSend ( $g_hwnd, "", "", "{Left}")
+			Sleep(30)
+			ControlSend ( $g_hwnd, "", "", "{Right}")
+			Sleep(30)
+		EndIf
 	EndIf
 EndFunc
 
@@ -267,6 +273,14 @@ Func StepCheckbox($step)
 		$g_step = True
 	Else
 		$g_step = False
+	EndIf
+EndFunc
+
+Func FastStepCheckbox($step)
+	If BitAND(GUICtrlRead($step), $GUI_CHECKED) = $GUI_CHECKED Then
+		$g_fastStep = True
+	Else
+		$g_fastStep = False
 	EndIf
 EndFunc
 

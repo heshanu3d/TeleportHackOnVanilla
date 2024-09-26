@@ -195,6 +195,7 @@ Func LaunchUI()
     $speed_swi = GUICtrlCreateCheckbox("speed", 135, 640, 60, 20)
 
     $login = GUICtrlCreateButton("login",       190, 640, 70, 20)
+    $fastStep = GUICtrlCreateCheckbox("fastStep", 280, 640, 680, 20)
 
     $g_log = GUICtrlCreateEdit("",                10,  670, 380, 200, BitOR($ES_AUTOVSCROLL, $WS_VSCROLL))
 
@@ -225,6 +226,8 @@ Func LaunchUI()
 				SyncTeleport($sync)
 			Case $msg = $step
 				StepCheckbox($step)
+            Case $msg = $fastStep
+				FastStepCheckbox($fastStep)
 			Case $msg = $farmEYun
 				FarmCheckbox($farmEYun)
 			Case $msg = $pidList

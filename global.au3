@@ -21,6 +21,7 @@ Global $g_syncTeleport = False
 Global $g_step = False
 Global $g_farmEYun = False
 Global $g_startBot = False
+Global $g_fastStep = False
 
 Global $teleport_file = "favlist.fav"
 Global $hotkey_file = "hotkey.txt"
