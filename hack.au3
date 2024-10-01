@@ -61,7 +61,11 @@ Func ReadPosition()
         print("CurrPosY : " & $CurrY)
         print("CurrPosZ : " & $CurrZ)
         ;~ $R=_MemoryRead($Adr+$PosR,$g_singleWowProcess,"float")
-        Local $posArr[3] = [Round($CurrX, 3), Round($CurrY, 3), Round($CurrZ, 3)]
+        If $version = "1.12.1" Then
+            Local $posArr[3] = [Round($CurrY, 3), Round($CurrX, 3), Round($CurrZ, 3)]
+        Else
+            Local $posArr[3] = [Round($CurrX, 3), Round($CurrY, 3), Round($CurrZ, 3)]
+		EndIf
         return $posArr
     EndIf
 EndFunc

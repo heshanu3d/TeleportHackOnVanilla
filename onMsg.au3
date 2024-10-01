@@ -40,9 +40,9 @@ Func TeleportInterface($x, $y, $z)
 	If $g_step = True Then
 		TeleportStepByStep($x, $y, $z)
 	Else
-		If $version = "3.3.5" and $version = "1.12.3" Then
+		If $version = "3.3.5" or $version = "1.12.1" Then
 			WritePosition($y, $x, $z)
-		ElseIf $version = "1.12.1" Then
+		ElseIf $version = "1.12.3" Then
 			WritePosition($x, $y, $z)
 		EndIf
 		Sleep(40)
