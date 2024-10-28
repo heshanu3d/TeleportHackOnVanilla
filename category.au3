@@ -7,6 +7,8 @@ Global $g_teleList_bfty[0]
 Global $g_teleList_lghy[0]
 Global $g_teleList_zdk[0]
 Global $g_teleList_slcpd[0]
+Global $g_teleList_cjs[0]
+Global $g_teleList_mssl[0]
 Global $g_teleList_other[0]
 
 Func InitGlobalTeleportList()
@@ -18,6 +20,8 @@ Func InitGlobalTeleportList()
     Redim $g_teleList_lghy[0]
     Redim $g_teleList_zdk[0]
     Redim $g_teleList_slcpd[0]
+    Redim $g_teleList_cjs[0]
+    Redim $g_teleList_mssl[0]
     Redim $g_teleList_other[0]
 EndFunc
 
@@ -47,6 +51,10 @@ Func Func_telelist($cateText, $_func, $p1=0, $p2=0, $p3=0, $p4=0, $p5=0)
         return _Func_telelist($paramCnt, $_func, $g_teleList_fuben, $p1, $p2, $p3, $p4, $p5)
     ElseIf $cateText = "艾尔文森林" Then
         return _Func_telelist($paramCnt, $_func, $g_teleList_arwsl, $p1, $p2, $p3, $p4, $p5)
+    ElseIf $cateText = "赤脊山" Then
+        return _Func_telelist($paramCnt, $_func, $g_teleList_cjs, $p1, $p2, $p3, $p4, $p5)
+    ElseIf $cateText = "暮色森林" Then
+        return _Func_telelist($paramCnt, $_func, $g_teleList_mssl, $p1, $p2, $p3, $p4, $p5)
     ElseIf $cateText = "主城" Then
         return _Func_telelist($paramCnt, $_func, $g_teleList_city,  $p1, $p2, $p3, $p4, $p5)
     ElseIf $cateText = "北风苔原" Then

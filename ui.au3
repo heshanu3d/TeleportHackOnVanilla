@@ -189,7 +189,7 @@ Func LaunchUI()
     $save = GUICtrlCreateButton("save",         100, 610, 70, 20)
     $reload = GUICtrlCreateButton("reload",     190, 610, 70, 20)
 
-    $res = GUICtrlCreateButton("res",           10,  640, 70, 20) ;~ for combobox
+    $appendPos = GUICtrlCreateButton("appendPos",           10,  640, 70, 20)
 
     $g_speed = GUICtrlCreateInput("",           100, 640, 35, 20)
     $speed_swi = GUICtrlCreateCheckbox("speed", 135, 640, 60, 20)
@@ -197,7 +197,9 @@ Func LaunchUI()
     $login = GUICtrlCreateButton("login",       190, 640, 70, 20)
     $fastStep = GUICtrlCreateCheckbox("fastStep", 280, 640, 680, 20)
 
-    $g_log = GUICtrlCreateEdit("",                10,  670, 380, 200, BitOR($ES_AUTOVSCROLL, $WS_VSCROLL))
+    $res = GUICtrlCreateButton("res",           10,  670, 70, 20)
+
+    $g_log = GUICtrlCreateEdit("",                10,  700, 380, 200, BitOR($ES_AUTOVSCROLL, $WS_VSCROLL))
 
     ;~ richEdit loaded too slow
     ;~ $g_log = _GUICtrlRichEdit_Create($ui, "", 10, 610, 380, 320, BitOR($ES_MULTILINE, $WS_VSCROLL, $ES_AUTOVSCROLL))
@@ -210,6 +212,8 @@ Func LaunchUI()
                 Login()
             Case $msg = $insertPos
                 InsertPos($g_input, $listview, GUICtrlRead($comboBox))
+            Case $msg = $appendPos
+                AppendPos($g_input, $listview, GUICtrlRead($comboBox))
             Case $msg = $addPos
                 AddPos($g_input, $listview, GUICtrlRead($comboBox))
             Case $msg = $editPos
@@ -218,6 +222,7 @@ Func LaunchUI()
                 DelPos($listview, GUICtrlRead($comboBox))
             Case $msg = $save
                 Save($listview, $comboBox)
+                ReloadUI($listview, $comboBox, $pidList, $playernameList)
             Case $msg = $reload
                 ReloadUI($listview, $comboBox, $pidList, $playernameList)
             Case $msg = $teleport
