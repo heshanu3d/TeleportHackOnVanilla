@@ -1,6 +1,11 @@
 Global $g_category_selected = "所有"
 
-Global $g_teleList_fuben[0]
+Global $g_teleList_tuanben60[0]
+Global $g_teleList_fuben60[0]
+Global $g_teleList_fuben70[0]
+Global $g_teleList_fuben80[0]
+Global $g_teleList_fbquest[0]
+Global $g_teleList_fbaoe[0]
 Global $g_teleList_arwsl[0]
 Global $g_teleList_city[0]
 Global $g_teleList_bfty[0]
@@ -13,7 +18,12 @@ Global $g_teleList_other[0]
 
 Func InitGlobalTeleportList()
     Redim $g_teleList_whole[0]
-    Redim $g_teleList_fuben[0]
+    Redim $g_teleList_tuanben60[0]
+    Redim $g_teleList_fuben60[0]
+    Redim $g_teleList_fuben70[0]
+    Redim $g_teleList_fuben80[0]
+    Redim $g_teleList_fbquest[0]
+    Redim $g_teleList_fbaoe[0]
     Redim $g_teleList_arwsl[0]
     Redim $g_teleList_city[0]
     Redim $g_teleList_bfty[0]
@@ -47,8 +57,18 @@ Func Func_telelist($cateText, $_func, $p1=0, $p2=0, $p3=0, $p4=0, $p5=0)
     ;~ print("paramCnt " & $paramCnt)
     If $cateText = "所有" Then
         return _Func_telelist($paramCnt, $_func, $g_teleList_whole, $p1, $p2, $p3, $p4, $p5)
-    ElseIf $cateText = "副本" Then
-        return _Func_telelist($paramCnt, $_func, $g_teleList_fuben, $p1, $p2, $p3, $p4, $p5)
+    ElseIf $cateText = "团本60" Then
+        return _Func_telelist($paramCnt, $_func, $g_teleList_tuanben60, $p1, $p2, $p3, $p4, $p5)
+    ElseIf $cateText = "副本60" Then
+        return _Func_telelist($paramCnt, $_func, $g_teleList_fuben60, $p1, $p2, $p3, $p4, $p5)
+    ElseIf $cateText = "副本70" Then
+        return _Func_telelist($paramCnt, $_func, $g_teleList_fuben70, $p1, $p2, $p3, $p4, $p5)
+    ElseIf $cateText = "副本80" Then
+        return _Func_telelist($paramCnt, $_func, $g_teleList_fuben80, $p1, $p2, $p3, $p4, $p5)
+    ElseIf $cateText = "副本任务" Then
+        return _Func_telelist($paramCnt, $_func, $g_teleList_fbquest, $p1, $p2, $p3, $p4, $p5)
+    ElseIf $cateText = "副本AOE" Then
+        return _Func_telelist($paramCnt, $_func, $g_teleList_fbaoe, $p1, $p2, $p3, $p4, $p5)
     ElseIf $cateText = "艾尔文森林" Then
         return _Func_telelist($paramCnt, $_func, $g_teleList_arwsl, $p1, $p2, $p3, $p4, $p5)
     ElseIf $cateText = "赤脊山" Then
