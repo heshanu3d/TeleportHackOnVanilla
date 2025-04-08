@@ -45,6 +45,7 @@ jobs:
            Move-Item "main1.12.1.exe" C:\"Program Files (x86)"\AutoIt3\Aut2Exe\build
            Move-Item "main1.12.3.exe" C:\"Program Files (x86)"\AutoIt3\Aut2Exe\build
            Move-Item "main3.3.5.exe" C:\"Program Files (x86)"\AutoIt3\Aut2Exe\build
+           Move-Item "favlist.fav" C:\"Program Files (x86)"\AutoIt3\Aut2Exe\build
            cd C:\"Program Files (x86)"\AutoIt3\Aut2Exe
            cd build
            Rename-Item -Path "main1.12.1.exe" -NewName Teleportors-1.12.1-$ver.exe
