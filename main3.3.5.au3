@@ -23,6 +23,7 @@ Global $PosX = 0x798
 Global $PosY = 0x79C
 Global $PosZ = 0x7A0
 Global $PosR = 0x7A8
+Global $MapID = 0xAB63BC
 Global $SpeedGlobal = 0x814
 
 Global $autoloot_call = 0

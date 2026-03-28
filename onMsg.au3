@@ -43,7 +43,8 @@ Func TeleportInterface($x, $y, $z)
 		If $version = "3.3.5" or $version = "1.12.1" Then
 			WritePosition($y, $x, $z)
 		ElseIf $version = "1.12.3" Then
-			WritePosition($x, $y, $z)
+			;~ WritePosition($x, $y, $z)
+			WritePosition($y, $x, $z)
 		EndIf
 		Sleep(40)
 		;Send("{Left}")
@@ -273,12 +274,44 @@ Func ReloadUI($listview, $comboBox, ByRef $list, ByRef $playernameList)
 	InitPidAndPlaynameList($list, $playernameList)
 EndFunc
 
-Func GoHome()
-    ;~ 闪金镇
+Func Home()
+
     Local $x = -9458.8232
     Local $y = 43.626
     Local $z = 56.9500
-    TeleportInterface($x, $y, $z)
+    ;~ TeleportInterface($x, $y, $z)
+	If $version = "3.3.5" Then
+		$map = ReadMap()
+		print('mapid: ' & $map)
+		If $map = 0 then
+			;~ 0 主城-暴风城-贸易区#-8843.535#625.114#94.281
+			Local $x = -8843.535
+			Local $y = 625.114
+			Local $z = 94.281
+			;~ WritePositionSingle($x, $y, $z, $g_singleWowProcess)
+		ElseIf $map = 1 then
+			;~ 1 主城-达纳苏斯-传送大师#9868.812#2493.633#1315.876
+			Local $x = 9868.812
+			Local $y = 2493.633
+			Local $z = 1315.876
+			;~ WritePositionSingle($x, $y, $z, $g_singleWowProcess)
+		ElseIf $map = 530 then
+			;~ 530 主城-沙塔斯-传送大师#-1887.801#5357.083#-12.429
+			Local $x = -1887.801
+			Local $y = 5357.083
+			Local $z = -12.429
+			;~ WritePositionSingle($x, $y, $z, $g_singleWowProcess)
+		ElseIf $map = 571 then
+			;~ 571 主城-达拉然-传送大师#5809.278#504.377#657.532
+			Local $x = 5809.278
+			Local $y = 504.377
+			Local $z = 657.532
+			;~ WritePositionSingle($x, $y, $z, $g_singleWowProcess)
+		Else
+			return
+		EndIf
+		WritePositionSingle($y, $x, $z, $g_singleWowProcess)
+	EndIf
 EndFunc
 
 Func StepCheckbox($step)

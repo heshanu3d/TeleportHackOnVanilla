@@ -197,7 +197,7 @@ Func LaunchUI()
     $login = GUICtrlCreateButton("login",       190, 640, 70, 20)
     $fastStep = GUICtrlCreateCheckbox("fastStep", 280, 640, 680, 20)
 
-    $res = GUICtrlCreateButton("res",           10,  670, 70, 20)
+    $home = GUICtrlCreateButton("home",           10,  670, 70, 20)
 
     $g_log = GUICtrlCreateEdit("",                10,  700, 380, 200, BitOR($ES_AUTOVSCROLL, $WS_VSCROLL))
 
@@ -241,6 +241,8 @@ Func LaunchUI()
                 SwitchSpeed($speed_swi)
             Case $msg = $comboBox
                 SwitchListview(GUICtrlRead($comboBox))
+            Case $msg = $home
+                Home()
         EndSelect
     Until $msg = $GUI_EVENT_CLOSE
 EndFunc
