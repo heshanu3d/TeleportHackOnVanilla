@@ -1,42 +1,37 @@
 Global $g_category_selected = "所有"
 
-Global $g_teleList_tuanben60[0]
-Global $g_teleList_fuben60[0]
-Global $g_teleList_fuben70[0]
-Global $g_teleList_fuben80[0]
-Global $g_teleList_fbquest[0]
-Global $g_teleList_fbaoe[0]
-Global $g_teleList_arwsl[0]
-Global $g_teleList_city[0]
-Global $g_teleList_bfty[0]
-Global $g_teleList_lghy[0]
-Global $g_teleList_zdk[0]
-Global $g_teleList_slcpd[0]
-Global $g_teleList_cjs[0]
-Global $g_teleList_mssl[0]
-Global $g_teleList_dltr[0]
-Global $g_teleList_pjzd[0]
-Global $g_teleList_other[0]
+; 使用 Scripting.Dictionary 动态存储分类
+; Key: 分类名称 (如 "副本60", "西部荒野" 等)
+; Value: 该分类的传送点数组
+Global $g_teleListDict = ObjCreate("Scripting.Dictionary")
 
+; "所有" 分类单独存储
+Global $g_teleList_whole[0]
+
+; 初始化所有传送点列表（清空）
 Func InitGlobalTeleportList()
     Redim $g_teleList_whole[0]
-    Redim $g_teleList_tuanben60[0]
-    Redim $g_teleList_fuben60[0]
-    Redim $g_teleList_fuben70[0]
-    Redim $g_teleList_fuben80[0]
-    Redim $g_teleList_fbquest[0]
-    Redim $g_teleList_fbaoe[0]
-    Redim $g_teleList_arwsl[0]
-    Redim $g_teleList_city[0]
-    Redim $g_teleList_bfty[0]
-    Redim $g_teleList_lghy[0]
-    Redim $g_teleList_zdk[0]
-    Redim $g_teleList_slcpd[0]
-    Redim $g_teleList_cjs[0]
-    Redim $g_teleList_mssl[0]
-    Redim $g_teleList_dltr[0]
-    Redim $g_teleList_pjzd[0]
-    Redim $g_teleList_other[0]
+    
+    ; 清空字典中所有分类
+    $g_teleListDict.RemoveAll()
+EndFunc
+
+; 确保分类存在（不存在则创建空数组）
+Func EnsureCategoryExists($categoryName)
+    If $categoryName <> "所有" And Not $g_teleListDict.Exists($categoryName) Then
+        Local $emptyArray[0]
+        $g_teleListDict.Add($categoryName, $emptyArray)
+    EndIf
+EndFunc
+
+; 获取所有分类名称数组（用于填充下拉框）
+Func GetAllCategoryNames()
+    If $g_teleListDict.Count > 0 Then
+        Return $g_teleListDict.Keys
+    Else
+        Local $emptyArray[0]
+        Return $emptyArray
+    EndIf
 EndFunc
 
 Func _Func_telelist($paramCnt, $_func, ByRef $teleList, $p1=0, $p2=0, $p3=0, $p4=0, $p5=0)
@@ -56,50 +51,64 @@ Func _Func_telelist($paramCnt, $_func, ByRef $teleList, $p1=0, $p2=0, $p3=0, $p4
         print("_Func_telelist function param is > 5, not supported now")
     EndIf
 EndFunc
+
+; 判断是否为修改数组的操作
+Func _IsModifyOperation($_func)
+    Return ($_func = _InsertPos_telelist Or $_func = _AddPos_telelist Or $_func = _EditPos_telelist Or $_func = _DelPos_telelist Or $_func = _GenTeleListByCategory)
+EndFunc
+
 Func Func_telelist($cateText, $_func, $p1=0, $p2=0, $p3=0, $p4=0, $p5=0)
     Local $paramCnt = @NumParams - 2
+    Local $teleList
+    Local $needUpdate = _IsModifyOperation($_func)
+
     ;~ print("paramCnt " & $paramCnt)
+    
     If $cateText = "所有" Then
-        return _Func_telelist($paramCnt, $_func, $g_teleList_whole, $p1, $p2, $p3, $p4, $p5)
-    ElseIf $cateText = "团本60" Then
-        return _Func_telelist($paramCnt, $_func, $g_teleList_tuanben60, $p1, $p2, $p3, $p4, $p5)
-    ElseIf $cateText = "副本60" Then
-        return _Func_telelist($paramCnt, $_func, $g_teleList_fuben60, $p1, $p2, $p3, $p4, $p5)
-    ElseIf $cateText = "副本70" Then
-        return _Func_telelist($paramCnt, $_func, $g_teleList_fuben70, $p1, $p2, $p3, $p4, $p5)
-    ElseIf $cateText = "副本80" Then
-        return _Func_telelist($paramCnt, $_func, $g_teleList_fuben80, $p1, $p2, $p3, $p4, $p5)
-    ElseIf $cateText = "副本任务" Then
-        return _Func_telelist($paramCnt, $_func, $g_teleList_fbquest, $p1, $p2, $p3, $p4, $p5)
-    ElseIf $cateText = "副本AOE" Then
-        return _Func_telelist($paramCnt, $_func, $g_teleList_fbaoe, $p1, $p2, $p3, $p4, $p5)
-    ElseIf $cateText = "艾尔文森林" Then
-        return _Func_telelist($paramCnt, $_func, $g_teleList_arwsl, $p1, $p2, $p3, $p4, $p5)
-    ElseIf $cateText = "赤脊山" Then
-        return _Func_telelist($paramCnt, $_func, $g_teleList_cjs, $p1, $p2, $p3, $p4, $p5)
-    ElseIf $cateText = "暮色森林" Then
-        return _Func_telelist($paramCnt, $_func, $g_teleList_mssl, $p1, $p2, $p3, $p4, $p5)
-    ElseIf $cateText = "杜隆塔尔" Then
-        return _Func_telelist($paramCnt, $_func, $g_teleList_dltr, $p1, $p2, $p3, $p4, $p5)
-    ElseIf $cateText = "贫瘠之地" Then
-        return _Func_telelist($paramCnt, $_func, $g_teleList_pjzd, $p1, $p2, $p3, $p4, $p5)
-    ElseIf $cateText = "主城" Then
-        return _Func_telelist($paramCnt, $_func, $g_teleList_city,  $p1, $p2, $p3, $p4, $p5)
-    ElseIf $cateText = "北风苔原" Then
-        return _Func_telelist($paramCnt, $_func, $g_teleList_bfty,  $p1, $p2, $p3, $p4, $p5)
-    ElseIf $cateText = "龙骨荒野" Then
-        return _Func_telelist($paramCnt, $_func, $g_teleList_lghy,  $p1, $p2, $p3, $p4, $p5)
-    ElseIf $cateText = "祖达克" Then
-        return _Func_telelist($paramCnt, $_func, $g_teleList_zdk,   $p1, $p2, $p3, $p4, $p5)
-    ElseIf $cateText = "索拉查盆地" Then
-        return _Func_telelist($paramCnt, $_func, $g_teleList_slcpd,  $p1, $p2, $p3, $p4, $p5)
-    Else
-        $cateText = "其他"
-        If $_func = _GenTeleListByCategory Then
-            $p2 = $cateText
+        ; "所有" 分类使用全局数组
+        $teleList = $g_teleList_whole
+        Local $result = _Func_telelist($paramCnt, $_func, $teleList, $p1, $p2, $p3, $p4, $p5)
+        If $needUpdate Then
+            $g_teleList_whole = $teleList
         EndIf
-        return _Func_telelist($paramCnt, $_func, $g_teleList_other, $p1, $p2, $p3, $p4, $p5)
-    Endif
+        Return $result
+        
+    ElseIf $g_teleListDict.Exists($cateText) Then
+        ; 分类已存在
+        $teleList = $g_teleListDict.Item($cateText)
+        Local $result = _Func_telelist($paramCnt, $_func, $teleList, $p1, $p2, $p3, $p4, $p5)
+        If $needUpdate Then
+            $g_teleListDict.Item($cateText) = $teleList
+        EndIf
+        Return $result
+        
+    Else
+        ; 分类不存在，创建新分类（用于 _GenTeleListByCategory）
+        ; 或者使用 "其他" 分类
+        If $_func = _GenTeleListByCategory Then
+            ; 创建新分类
+            Local $emptyArray[0]
+            $g_teleListDict.Add($cateText, $emptyArray)
+            $teleList = $emptyArray
+        Else
+            ; 使用 "其他" 分类
+            $cateText = "其他"
+            If Not $g_teleListDict.Exists($cateText) Then
+                Local $emptyArray[0]
+                $g_teleListDict.Add($cateText, $emptyArray)
+            EndIf
+            $teleList = $g_teleListDict.Item($cateText)
+            If $_func = _GenTeleListByCategory Then
+                $p2 = $cateText
+            EndIf
+        EndIf
+        
+        Local $result = _Func_telelist($paramCnt, $_func, $teleList, $p1, $p2, $p3, $p4, $p5)
+        If $needUpdate Then
+            $g_teleListDict.Item($cateText) = $teleList
+        EndIf
+        Return $result
+    EndIf
 EndFunc
 
 Func _InsertPos_telelist(ByRef $teleList, $selectedLine, $text, $currPosArr)
@@ -114,6 +123,7 @@ Func _InsertPos_telelist(ByRef $teleList, $selectedLine, $text, $currPosArr)
     ;~     print($i & " teleList " & $teleList[$i])
     ;~ Next
 EndFunc
+
 Func InsertPos_telelist($cateText, $selectedLine, $text, $currPosArr)
     Func_telelist($cateText, _InsertPos_telelist, $selectedLine, $text, $currPosArr)
 EndFunc
@@ -125,6 +135,7 @@ Func _AddPos_telelist(ByRef $teleList, $text, $currPosArr)
     ;~     print($i & " teleList " & $teleList[$i])
     ;~ Next
 EndFunc
+
 Func AddPos_telelist($cateText, $text, $currPosArr)
     Func_telelist($cateText, _AddPos_telelist, $text, $currPosArr)
 EndFunc
@@ -146,17 +157,19 @@ Func _EditPos_telelist(ByRef $teleList, $selectedLine, $text, $currPosArr)
     ;~ print($teleList[$columnCount*$selectedLine+2])
     ;~ print($teleList[$columnCount*$selectedLine+3])
 EndFunc
+
 Func EditPos_telelist($cateText, $selectedLine, $text, $currPosArr)
     Func_telelist($cateText, _EditPos_telelist, $selectedLine, $text, $currPosArr)
-EndFunc 
+EndFunc
 
 Func _DelPos_telelist(ByRef $teleList, $selectedLine)
     Local $range = $selectedLine*4 & "-" & ($selectedLine*4+3)
     _ArrayDelete($teleList, $range)
     ;~ For $i = 0 to UBound($teleList) - 1
-    ;~     print($i & " teleList " & $teleList[$i])
-    ;~ Next
+        ;~ print("delete " & $selectedLine)
+    Endif
 EndFunc
+
 Func DelPos_telelist($cateText, $selectedLine)
     If $selectedLine >= 0 Then
         Func_telelist($cateText, _DelPos_telelist, $selectedLine)
@@ -166,22 +179,17 @@ EndFunc
 Func _Save_telelist(ByRef $teleList)
     return $teleList
 EndFunc
+
 Func Save_telelist($cateText)
     return Func_telelist($cateText, _Save_telelist)
 EndFunc
 
 Func _GenTeleListByCategory(ByRef $teleList, $category, $cateText, $telePointText)
-    ;~ If $cateText = "所有" Then
-    ;~ ElseIf $cateText = "副本" Then
-    ;~ ElseIf $cateText = "艾尔文森林" Then
-    ;~ ElseIf $cateText = "主城" Then
-    ;~ Else
-    ;~     $cateText = "其他"
-    ;~ EndIf
     _ArrayAdd($teleList, $telePointText)
     Set_Add($category, $cateText)
     return $category
 EndFunc
+
 Func GenTeleListByCategory($category, $cateText, $telePointText)
     return Func_telelist($cateText, _GenTeleListByCategory, $category, $cateText, $telePointText)
 EndFunc
@@ -197,8 +205,6 @@ Func SwitchListviewWithCategory($cateText)
 EndFunc
 
 Func InitListviewWithList(ByRef $array, $info="")
-    ;~ refactor
-    ;~ GUICtrlDelete($g_listview)
     Local $listview = $g_listview
     _GUICtrlListView_Scroll($listview, 0, -10000)
     _GUICtrlListView_DeleteAllItems($listview)
@@ -206,9 +212,6 @@ Func InitListviewWithList(ByRef $array, $info="")
     print("reload with category:")
     print($info)
 
-    ;~ refactor
-    ;~ $listview = GUICtrlCreateListView("        描述        |      x      |      y      |      z      ", 10, 20, 380, 490)
-    ;~ GUICtrlSendMsg($listview, $LVM_SETCOLUMNWIDTH, 0, 250)
     $columnCount = _GUICtrlListView_GetColumnCount($listview)
     
     print("array ubound : " & UBound($array))

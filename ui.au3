@@ -199,7 +199,7 @@ Func LaunchUI()
 
     $home = GUICtrlCreateButton("home",           10,  670, 70, 20)
 
-    $g_log = GUICtrlCreateEdit("",                10,  700, 380, 200, BitOR($ES_AUTOVSCROLL, $WS_VSCROLL))
+    $g_log = GUICtrlCreateEdit("",                10,  700, 380, 175, BitOR($ES_AUTOVSCROLL, $WS_VSCROLL))
 
     ;~ richEdit loaded too slow
     ;~ $g_log = _GUICtrlRichEdit_Create($ui, "", 10, 610, 380, 320, BitOR($ES_MULTILINE, $WS_VSCROLL, $ES_AUTOVSCROLL))
