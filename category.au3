@@ -206,7 +206,10 @@ EndFunc
 
 Func InitListviewWithList(ByRef $array, $info="")
     Local $listview = $g_listview
-    _GUICtrlListView_Scroll($listview, 0, -10000)
+
+    ; 暂停重绘，避免逐条添加时每次都触发ListView重绘
+    _GUICtrlListView_BeginUpdate($listview)
+
     _GUICtrlListView_DeleteAllItems($listview)
 
     print("reload with category:")
@@ -227,6 +230,9 @@ Func InitListviewWithList(ByRef $array, $info="")
         $i = $i + $columnCount
         GUICtrlCreateListViewItem($text, $listview)
     WEnd
+
+    ; 恢复重绘，一次性渲染所有条目
+    _GUICtrlListView_EndUpdate($listview)
 
     return $listview
 EndFunc

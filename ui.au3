@@ -117,8 +117,9 @@ Func InitListview($listview = 0)
         ;~ refactor
         ;~ GUICtrlDelete($listview)
         ;~ GUICtrlSendMsg($listview, $LVM_SCROLL, 0, 0)
-        _GUICtrlListView_Scroll($listview, 0, -10000)
-        _GUICtrlListView_DeleteAllItems($listview)
+        ;~ _GUICtrlListView_Scroll($listview, 0, -10000)
+        ;~ _GUICtrlListView_DeleteAllItems($listview)
+        ;~ InitListviewWithList 已经处理了 DeleteAllItems，此处无需重复操作
         print("reload")
     Endif
 
