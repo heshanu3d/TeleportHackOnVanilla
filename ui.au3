@@ -127,7 +127,7 @@ EndFunc
 
 Func InitComboBox(Byref $category, $comboBox = 0)
     If $comboBox = 0 Then
-        $comboBox = GUICtrlCreateCombo("所有", 10, 00, 180, 20)
+        $comboBox = GUICtrlCreateCombo("所有", 10, 00, 100, 20)
     Else
         ;~ print("InitComboBox combobox delete start  with " & _GUICtrlComboBox_GetCount($comboBox))
         For $i = _GUICtrlComboBox_GetCount($comboBox) - 1 to 0 Step - 1

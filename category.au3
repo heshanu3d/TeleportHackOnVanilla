@@ -167,7 +167,7 @@ Func _DelPos_telelist(ByRef $teleList, $selectedLine)
     _ArrayDelete($teleList, $range)
     ;~ For $i = 0 to UBound($teleList) - 1
         ;~ print("delete " & $selectedLine)
-    Endif
+    ;~ Endif
 EndFunc
 
 Func DelPos_telelist($cateText, $selectedLine)
