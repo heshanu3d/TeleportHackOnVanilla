@@ -127,7 +127,9 @@ EndFunc
 
 Func InitComboBox(Byref $category, $comboBox = 0)
     If $comboBox = 0 Then
-        $comboBox = GUICtrlCreateCombo("所有", 10, 00, 100, 20)
+        $comboBox = GUICtrlCreateCombo("所有", 10, 00, 140, 20)
+        ;~ _GUICtrlComboBox_SetItemHeight($comboBox, 25) ; 控件显示区高度
+        _GUICtrlComboBox_SetItemHeight($comboBox, 25, 1) ; 下拉列表每项高度
     Else
         ;~ print("InitComboBox combobox delete start  with " & _GUICtrlComboBox_GetCount($comboBox))
         For $i = _GUICtrlComboBox_GetCount($comboBox) - 1 to 0 Step - 1
