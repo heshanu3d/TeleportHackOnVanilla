@@ -206,11 +206,14 @@ EndFunc
 
 Func InitListviewWithList(ByRef $array, $info="")
     Local $listview = $g_listview
+    Local $tTotal = TimerInit()
 
     ; 暂停重绘，避免逐条添加时每次都触发ListView重绘
     _GUICtrlListView_BeginUpdate($listview)
 
+    Local $t1 = TimerInit()
     _GUICtrlListView_DeleteAllItems($listview)
+    Local $tDelete = TimerDiff($t1)
 
     print("reload with category:")
     print($info)
@@ -221,18 +224,26 @@ Func InitListviewWithList(ByRef $array, $info="")
     Local $lineCount = UBound($array)
     print("$lineCount : " & $lineCount)
 
+    Local $t2 = TimerInit()
     Local $i = 0
+    Local $rowIdx = 0
     While $i + $columnCount-1 < $lineCount
-        $text = $array[$i]
+        _GUICtrlListView_AddItem($listview, $array[$i])
         For $c = 1 to $columnCount - 1
-            $text = $text & "|" & $array[$i+$c]
+            _GUICtrlListView_AddSubItem($listview, $rowIdx, $array[$i+$c], $c)
         Next
         $i = $i + $columnCount
-        GUICtrlCreateListViewItem($text, $listview)
+        $rowIdx = $rowIdx + 1
     WEnd
+    Local $tAdd = TimerDiff($t2)
 
     ; 恢复重绘，一次性渲染所有条目
     _GUICtrlListView_EndUpdate($listview)
+    Local $tTotalMs = TimerDiff($tTotal)
+
+    print("[PERF] InitListview DeleteAll: " & Round($tDelete, 1) & "ms")
+    print("[PERF] InitListview AddItems: " & Round($tAdd, 1) & "ms")
+    print("[PERF] InitListview Total: " & Round($tTotalMs, 1) & "ms")
 
     return $listview
 EndFunc

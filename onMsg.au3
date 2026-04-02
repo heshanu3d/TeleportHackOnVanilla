@@ -267,11 +267,32 @@ Func Save($listview, $comboBox)
 EndFunc
 
 Func ReloadUI($listview, $comboBox, ByRef $list, ByRef $playernameList)
-    Local $category = InitTeleportList()
-    InitComboBox($category, $comboBox)
+    Local $tReload = TimerInit()
 
-	$g_listview = InitListview($listview)
-	InitPidAndPlaynameList($list, $playernameList)
+    Local $t1 = TimerInit()
+    Local $category = InitTeleportList()
+    Local $tTeleport = TimerDiff($t1)
+
+    Local $t2 = TimerInit()
+    InitComboBox($category, $comboBox)
+    Local $tCombo = TimerDiff($t2)
+
+    Local $t3 = TimerInit()
+    $g_listview = InitListview($listview)
+    Local $tListview = TimerDiff($t3)
+
+    Local $t4 = TimerInit()
+    InitPidAndPlaynameList($list, $playernameList)
+    Local $tPid = TimerDiff($t4)
+
+    Local $tTotal = TimerDiff($tReload)
+    print("[PERF] ====== ReloadUI ======")
+    print("[PERF] InitTeleportList: " & Round($tTeleport, 1) & "ms")
+    print("[PERF] InitComboBox:     " & Round($tCombo, 1) & "ms")
+    print("[PERF] InitListview:     " & Round($tListview, 1) & "ms")
+    print("[PERF] InitPidList:      " & Round($tPid, 1) & "ms")
+    print("[PERF] ReloadUI Total:   " & Round($tTotal, 1) & "ms")
+    print("[PERF] =========================")
 EndFunc
 
 Func Home()

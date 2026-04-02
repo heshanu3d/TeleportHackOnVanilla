@@ -34,76 +34,104 @@ Func InitPidAndPlaynameList(ByRef $pidList, ByRef $playernameList)
 EndFunc
 
 Func InitTeleportList()
+    Local $tTotal = TimerInit()
+
     InitGlobalTeleportList()
+
     $teleList_whole = FileReadToArray($teleport_file)
     $g_lineCount = @extended
+    Local $bFileError = @error
+    Local $tFileRead = TimerDiff($tTotal)
     print("$g_lineCount : " & $g_lineCount)
     $columnCount = 4
-    Local $category[0]
 
-    Local $set[0]
-    If @error Then
-        MsgBox($MB_SYSTEMMODAL, "", "There was an error reading the file. @error: " & @error)
-    Else
-        Local $i = 0
-        While $i < $g_lineCount
-        ;~ While $i + $columnCount-1 < $g_lineCount
-            Local $text = $teleList_whole[$i]
-            Local $split = StringSplit($text, $g_telelist_split_str)
-            ;~ print($i & " UBound($split) is " & UBound($split) & "------" & $split[0] & ", " & $split[1])
-            ;~ StringSplit 返回值的第一个元素是数组的个数(即 : 分割的数量+1)
-            If UBound($split) - 1 = $columnCount Then
-                ;~ print("UBound($split) is " & $columnCount)
-
-                Local $telePointText[0]
-                For $j = 1 To $split[0]
-                    _ArrayAdd($telePointText, $split[$j])
-                    ;~ print($j & " Add " & $split[$j])
-                Next
-
-                ;~ Local $telePointText = StringReplace($text, $g_telelist_split_str, "|")
-
-                Local $textsplit = StringSplit($split[1], "-")
-    
-                If $textsplit[0] > 0 Then
-                    $text = $textsplit[1] ; 获取"-"前面的部分
-                EndIf
-
-                $category = GenTeleListByCategory($category, $text, $telePointText)
-                $category = GenTeleListByCategory($category, "所有", $telePointText)
-                ;~ _ArrayAdd($g_teleList_whole, $telePointText)
-                ;~ print("UBound($g_teleList_whole) is " & UBound($g_teleList_whole))
-                $i = $i + 1
-            Else
-                If $i + $columnCount-1 >= $g_lineCount Then
-                    ExitLoop
-                EndIf
-
-                Local $telePointText = $text
-                For $c = 1 to $columnCount - 1
-                    $telePointText = $telePointText & "|" & $teleList_whole[$i+$c]
-                Next
-                ;~ print($telePointText)
-
-                Local $textsplit = StringSplit($text, "-")
-
-                If $textsplit[0] > 0 Then
-                    $text = $textsplit[1] ; 获取"-"前面的部分
-                EndIf
-
-                $category = GenTeleListByCategory($category, $text, $telePointText)
-                $category = GenTeleListByCategory($category, "所有", $telePointText)
-                ;~ print("UBound($g_teleList_whole) is " & UBound($g_teleList_whole))
-                $i = $i + $columnCount
-            EndIf
-        WEnd
+    If $bFileError Then
+        MsgBox($MB_SYSTEMMODAL, "", "There was an error reading the file. @error: " & $bFileError)
+        Local $category[0]
+        Return $category
     EndIf
 
-    ;~ For $i = 0 to UBound($category) - 1
-    ;~     print("category " & $category[$i])
-    ;~ Next
+    ; 使用 ArrayList 替代 _ArrayAdd，避免每次 ReDim 导致 O(n²) 开销
+    ; ArrayList.Add() 内部自动扩容，均摊 O(1)；最后 .ToArray() 一次性转回标准数组
+    Local $allList = ObjCreate("System.Collections.ArrayList")
+    ; Dictionary: 分类名 -> ArrayList（该分类的传送点）
+    Local $catDict = ObjCreate("Scripting.Dictionary")
+    ; 保持分类插入顺序（用于填充 ComboBox）
+    Local $categoryOrder = ObjCreate("System.Collections.ArrayList")
 
-    return $category
+    Local $tParse = TimerInit()
+    Local $i = 0
+    While $i < $g_lineCount
+        Local $text = $teleList_whole[$i]
+        Local $split = StringSplit($text, $g_telelist_split_str)
+
+        If UBound($split) - 1 = $columnCount Then
+            ; # 格式：一行包含 desc#x#y#z
+            ; 提取分类名（取描述字段中"-"前面的部分）
+            Local $cateText = $split[1]
+            Local $dashSplit = StringSplit($cateText, "-")
+            If $dashSplit[0] > 0 Then $cateText = $dashSplit[1]
+
+            ; 加入 "所有" 列表
+            For $j = 1 To $split[0]
+                $allList.Add($split[$j])
+            Next
+
+            ; 加入对应分类列表
+            If Not $catDict.Exists($cateText) Then
+                $catDict.Add($cateText, ObjCreate("System.Collections.ArrayList"))
+                $categoryOrder.Add($cateText)
+            EndIf
+            Local $catList = $catDict.Item($cateText)
+            For $j = 1 To $split[0]
+                $catList.Add($split[$j])
+            Next
+
+            $i = $i + 1
+        Else
+            ; 多行格式：每条记录占 columnCount 行
+            If $i + $columnCount - 1 >= $g_lineCount Then ExitLoop
+
+            Local $cateText = $text
+            Local $dashSplit = StringSplit($cateText, "-")
+            If $dashSplit[0] > 0 Then $cateText = $dashSplit[1]
+
+            ; 加入 "所有" 列表（每个字段单独存储，保持 stride=4 的一致性）
+            $allList.Add($text)
+            For $c = 1 To $columnCount - 1
+                $allList.Add($teleList_whole[$i + $c])
+            Next
+
+            ; 加入对应分类列表
+            If Not $catDict.Exists($cateText) Then
+                $catDict.Add($cateText, ObjCreate("System.Collections.ArrayList"))
+                $categoryOrder.Add($cateText)
+            EndIf
+            Local $catList = $catDict.Item($cateText)
+            $catList.Add($text)
+            For $c = 1 To $columnCount - 1
+                $catList.Add($teleList_whole[$i + $c])
+            Next
+
+            $i = $i + $columnCount
+        EndIf
+    WEnd
+    Local $tParseMs = TimerDiff($tParse)
+
+    ; ArrayList -> 标准数组，存入全局变量
+    $g_teleList_whole = $allList.ToArray()
+
+    Local $keys = $catDict.Keys
+    For $k = 0 To UBound($keys) - 1
+        $g_teleListDict.Add($keys[$k], $catDict.Item($keys[$k]).ToArray())
+    Next
+
+    Local $tTotalMs = TimerDiff($tTotal)
+    print("[PERF] InitTeleportList FileRead: " & Round($tFileRead, 1) & "ms")
+    print("[PERF] InitTeleportList Parse: " & Round($tParseMs, 1) & "ms")
+    print("[PERF] InitTeleportList Total: " & Round($tTotalMs, 1) & "ms")
+
+    return $categoryOrder.ToArray()
 EndFunc
 
 Func InitListview($listview = 0)
