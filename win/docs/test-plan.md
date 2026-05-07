@@ -39,9 +39,11 @@
 | `tests/unit/test_teleport_service.py` | `application.teleport_service`        | 7  |
 | `tests/unit/test_feature_toggles.py`  | `application.feature_toggles`         | 9  |
 | `tests/unit/test_hotkey_service.py`   | `application.hotkey_service` + `infrastructure.hotkey.manager` (parser only) | 8 |
+| `tests/unit/test_main_window_smoke.py` | `presentation.main_window` (smoke, requires PySide6 + pytest-qt) | 4 |
 
-**Total: 76 unit tests**, exit code 0 in `0.14s` on a developer
-laptop.
+**Total: 76 unit tests** plus a **4-case GUI smoke suite** (auto-skipped
+when PySide6 / pytest-qt are not installed). Suite exits in `~0.14s` on a
+developer laptop.
 
 ## Parity tests called out
 
