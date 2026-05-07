@@ -42,6 +42,31 @@ python -m venv .venv
 pip install -e ".[dev]"  # add ",windows" on Windows machines
 ```
 
+### Windows shortcut (.bat helpers)
+
+Three batch files at the repository root automate the common workflows
+so you don't have to retype `pip install` and `python -m teleport_hack`
+on every iteration:
+
+| Script | Equivalent commands | Use when |
+| ------ | ------------------- | -------- |
+| `install.bat` | `python -m pip install -e "win[windows,dev]"` | A new dependency was added to `pyproject.toml` |
+| `start.bat`   | `python -m teleport_hack [args...]`           | You edited code under `win\` and want to launch |
+| `run.bat`     | `install.bat` then `start.bat` in one go      | First run, or unsure of state |
+
+All three honour a `PYTHON` env var (e.g.
+`set PYTHON=D:\Python3_10\python.exe`) for non-default interpreters,
+and pause at the end so any error stays visible when launched from
+Explorer. `start.bat` / `run.bat` forward extra args to
+`teleport-hack` directly:
+
+```bat
+start.bat --version 1.12.1 --log-level DEBUG
+```
+
+Because the install is editable, code changes under `win\src\` are
+picked up by the next `start.bat` without re-installing.
+
 ## Run
 
 ```bash
