@@ -1,0 +1,6 @@
+# Force CRLF for Windows batch / cmd files so they always work when
+# launched from cmd.exe / Explorer, regardless of the host OS that
+# committed them.
+*.bat   text eol=crlf
+*.cmd   text eol=crlf
+*.ps1   text eol=crlf
