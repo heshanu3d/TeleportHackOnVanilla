@@ -69,7 +69,10 @@ class MainWindow(QMainWindow):
     ) -> None:
         super().__init__()
         self.setWindowTitle(f"TeleportHack — WoW {version.name}")
-        self.resize(680, 800)
+        # Narrow + tall layout to match the original AutoIt window
+        # (ui.au3:195 → GUICreate(..., 400, 880, 100, 200, ...)).
+        self.resize(420, 880)
+        self.setMinimumWidth(360)
 
         self._favourites = favourites
         self._version = version
@@ -133,19 +136,22 @@ class MainWindow(QMainWindow):
         act_quit.triggered.connect(self.close)
         file_menu.addAction(act_quit)
 
-        # Top row: category + search
-        top_row = QHBoxLayout()
+        # Top row: category combo (full width)
+        cat_row = QHBoxLayout()
+        cat_row.addWidget(QLabel("分类:"))
         self._category_combo = QComboBox()
         self._category_combo.currentTextChanged.connect(self._on_category_changed)
-        top_row.addWidget(QLabel("分类:"))
-        top_row.addWidget(self._category_combo, stretch=1)
+        cat_row.addWidget(self._category_combo, stretch=1)
+        root.addLayout(cat_row)
 
+        # Search row (full width on its own line for narrow layout)
+        search_row = QHBoxLayout()
+        search_row.addWidget(QLabel("搜索:"))
         self._search_edit = QLineEdit()
         self._search_edit.setPlaceholderText("搜索描述...")
         self._search_edit.textChanged.connect(self._on_search_changed)
-        top_row.addWidget(QLabel("搜索:"))
-        top_row.addWidget(self._search_edit, stretch=1)
-        root.addLayout(top_row)
+        search_row.addWidget(self._search_edit, stretch=1)
+        root.addLayout(search_row)
 
         # Table + filter proxy
         self._model = TeleportTableModel(self._favourites)
@@ -168,24 +174,27 @@ class MainWindow(QMainWindow):
         self._desc_edit.setPlaceholderText("传送点描述（如：斯坦索姆-入口）")
         root.addWidget(self._desc_edit)
 
-        # Toggles row
-        toggles = QHBoxLayout()
+        # Toggles row 1: step-tp checkbox + AntiJump
+        toggles1 = QHBoxLayout()
         self._step_cb = QCheckBox("step-tp")
         self._step_cb.toggled.connect(self._on_step_toggled)
-        toggles.addWidget(self._step_cb)
+        toggles1.addWidget(self._step_cb)
 
         self._anti_jump_btn = QPushButton("AntiJump")
         self._anti_jump_btn.clicked.connect(self._toggle_anti_jump)
-        toggles.addWidget(self._anti_jump_btn)
+        toggles1.addWidget(self._anti_jump_btn, stretch=1)
+        root.addLayout(toggles1)
 
+        # Toggles row 2: AutoLoot + LuaUnlock
+        toggles2 = QHBoxLayout()
         self._autoloot_btn = QPushButton("AutoLoot")
         self._autoloot_btn.clicked.connect(self._toggle_autoloot)
-        toggles.addWidget(self._autoloot_btn)
+        toggles2.addWidget(self._autoloot_btn, stretch=1)
 
         self._lua_btn = QPushButton("LuaUnlock")
         self._lua_btn.clicked.connect(self._toggle_lua)
-        toggles.addWidget(self._lua_btn)
-        root.addLayout(toggles)
+        toggles2.addWidget(self._lua_btn, stretch=1)
+        root.addLayout(toggles2)
 
         # CRUD row 1: positional (Insert/Append/Edit/Delete)
         crud1 = QHBoxLayout()
