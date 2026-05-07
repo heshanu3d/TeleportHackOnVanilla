@@ -167,99 +167,111 @@ class MainWindow(QMainWindow):
         header.setSectionResizeMode(0, QHeaderView.Stretch)
         for c in (1, 2, 3):
             header.setSectionResizeMode(c, QHeaderView.ResizeToContents)
-        root.addWidget(self._table, stretch=1)
+        # Give the favourites table the lion's share of vertical space.
+        root.addWidget(self._table, stretch=5)
 
         # Description input
         self._desc_edit = QLineEdit()
         self._desc_edit.setPlaceholderText("传送点描述（如：斯坦索姆-入口）")
         root.addWidget(self._desc_edit)
 
-        # Toggles row 1: step-tp checkbox + AntiJump
-        toggles1 = QHBoxLayout()
-        self._step_cb = QCheckBox("step-tp")
+        # Toggles row: step-tp + 3 byte-patch toggles in a single tight row.
+        toggles = QHBoxLayout()
+        toggles.setSpacing(4)
+        self._step_cb = QCheckBox("step")
         self._step_cb.toggled.connect(self._on_step_toggled)
-        toggles1.addWidget(self._step_cb)
-
-        self._anti_jump_btn = QPushButton("AntiJump")
-        self._anti_jump_btn.clicked.connect(self._toggle_anti_jump)
-        toggles1.addWidget(self._anti_jump_btn, stretch=1)
-        root.addLayout(toggles1)
-
-        # Toggles row 2: AutoLoot + LuaUnlock
-        toggles2 = QHBoxLayout()
-        self._autoloot_btn = QPushButton("AutoLoot")
-        self._autoloot_btn.clicked.connect(self._toggle_autoloot)
-        toggles2.addWidget(self._autoloot_btn, stretch=1)
-
-        self._lua_btn = QPushButton("LuaUnlock")
-        self._lua_btn.clicked.connect(self._toggle_lua)
-        toggles2.addWidget(self._lua_btn, stretch=1)
-        root.addLayout(toggles2)
-
-        # CRUD row 1: positional (Insert/Append/Edit/Delete)
-        crud1 = QHBoxLayout()
-        for label, slot in (
-            ("Insert ↑", self._insert_point),
-            ("Append ↓", self._append_point),
-            ("Edit", self._edit_point),
-            ("Delete", self._delete_point),
+        toggles.addWidget(self._step_cb)
+        for label, slot, attr in (
+            ("AntiJump", self._toggle_anti_jump, "_anti_jump_btn"),
+            ("AutoLoot", self._toggle_autoloot, "_autoloot_btn"),
+            ("LuaUnlock", self._toggle_lua, "_lua_btn"),
         ):
             btn = QPushButton(label)
+            btn.setMaximumHeight(24)
             btn.clicked.connect(slot)
-            crud1.addWidget(btn)
+            setattr(self, attr, btn)
+            toggles.addWidget(btn, stretch=1)
+        root.addLayout(toggles)
+
+        # CRUD row 1: positional (Insert/Append/Edit/Delete) — compact.
+        crud1 = QHBoxLayout()
+        crud1.setSpacing(4)
+        for label, slot in (
+            ("插前", self._insert_point),
+            ("插后", self._append_point),
+            ("编辑", self._edit_point),
+            ("删除", self._delete_point),
+        ):
+            btn = QPushButton(label)
+            btn.setMaximumHeight(24)
+            btn.clicked.connect(slot)
+            crud1.addWidget(btn, stretch=1)
         root.addLayout(crud1)
 
-        # CRUD row 2: append-end / save / reload
+        # CRUD row 2: append-end / save / reload — compact.
         crud2 = QHBoxLayout()
+        crud2.setSpacing(4)
         for label, slot in (
-            ("Add (end)", self._add_point),
-            ("Save", self._save),
-            ("Reload", self._reload_all),
+            ("追加", self._add_point),
+            ("保存", self._save),
+            ("重载", self._reload_all),
         ):
             btn = QPushButton(label)
+            btn.setMaximumHeight(24)
             btn.clicked.connect(slot)
-            crud2.addWidget(btn)
+            crud2.addWidget(btn, stretch=1)
         root.addLayout(crud2)
 
-        # Teleport button
+        # Teleport button (kept tall — it's the primary action).
         self._teleport_btn = QPushButton("Teleport (Enter)")
-        self._teleport_btn.setMinimumHeight(40)
+        self._teleport_btn.setMinimumHeight(36)
         self._teleport_btn.clicked.connect(self._teleport_selected)
         root.addWidget(self._teleport_btn)
 
         # Speed row
         speed_row = QHBoxLayout()
+        speed_row.setSpacing(4)
         speed_row.addWidget(QLabel("Speed:"))
         self._speed_edit = QLineEdit(str(self._settings.speed_value))
         self._speed_edit.setMaximumWidth(60)
         speed_row.addWidget(self._speed_edit)
         speed_btn = QPushButton("Apply")
+        speed_btn.setMaximumHeight(24)
         speed_btn.clicked.connect(self._apply_speed)
         speed_row.addWidget(speed_btn)
         speed_row.addStretch(1)
         root.addLayout(speed_row)
 
-        # Process list group
+        # Process list group — compact, fixed-ish height so it doesn't
+        # steal space from the favourites table.
         proc_group = QGroupBox("WoW 进程 (PID — 玩家)")
         proc_layout = QVBoxLayout(proc_group)
+        proc_layout.setContentsMargins(4, 4, 4, 4)
+        proc_layout.setSpacing(2)
         self._proc_list = QListWidget()
         self._proc_list.itemDoubleClicked.connect(self._on_proc_double_clicked)
+        self._proc_list.setMaximumHeight(70)
         proc_layout.addWidget(self._proc_list)
         proc_btn_row = QHBoxLayout()
+        proc_btn_row.setSpacing(4)
         attach_btn = QPushButton("Attach")
+        attach_btn.setMaximumHeight(22)
         attach_btn.clicked.connect(self._attach_selected_proc)
         refresh_btn = QPushButton("Refresh")
+        refresh_btn.setMaximumHeight(22)
         refresh_btn.clicked.connect(self._reload_processes)
         proc_btn_row.addWidget(attach_btn)
         proc_btn_row.addWidget(refresh_btn)
         proc_btn_row.addStretch(1)
         proc_layout.addLayout(proc_btn_row)
+        proc_group.setMaximumHeight(130)
         root.addWidget(proc_group)
 
-        # Log
+        # Log — modest stretch so it shrinks before the favourites table does.
         self._log_view = QPlainTextEdit()
         self._log_view.setReadOnly(True)
         self._log_view.setMaximumBlockCount(500)
+        self._log_view.setMaximumHeight(120)
         root.addWidget(self._log_view, stretch=1)
 
         self.setStatusBar(QStatusBar())
