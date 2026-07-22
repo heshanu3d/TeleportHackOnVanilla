@@ -47,5 +47,7 @@ Func TeleportDBClick($listview)
         Return
     EndIf
     $array = StringSplit($text, '|')
-    TeleportInterface($array[2], $array[3], $array[4])
+    Local $r = ""
+    If $array[0] >= 5 Then $r = $array[5]
+    TeleportInterface($array[2], $array[3], $array[4], $r)
 EndFunc

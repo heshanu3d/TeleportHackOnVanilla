@@ -129,7 +129,11 @@ Func InsertPos_telelist($cateText, $selectedLine, $text, $currPosArr)
 EndFunc
 
 Func _AddPos_telelist(ByRef $teleList, $text, $currPosArr)
+    Local $columnCount = _GUICtrlListView_GetColumnCount($g_listview)
     _ArrayAdd($teleList, $text)
+    For $i = 1 to $columnCount - 1
+        _ArrayAdd($teleList, $currPosArr[$i-1])
+    Next
     ;~ print(" add " & $text & " UBound($teleList) is " & UBound($teleList))
     ;~ For $i = 0 to UBound($teleList) - 1
     ;~     print($i & " teleList " & $teleList[$i])
@@ -151,6 +155,7 @@ Func _EditPos_telelist(ByRef $teleList, $selectedLine, $text, $currPosArr)
     $teleList[$columnCount*$selectedLine+1] = $currPosArr[0]
     $teleList[$columnCount*$selectedLine+2] = $currPosArr[1]
     $teleList[$columnCount*$selectedLine+3] = $currPosArr[2]
+    $teleList[$columnCount*$selectedLine+4] = $currPosArr[3]
     ;~ print("after columnCount" & $columnCount & " selectedLine " & $selectedLine)
     ;~ print($teleList[$columnCount*$selectedLine])
     ;~ print($teleList[$columnCount*$selectedLine+1])
@@ -163,7 +168,8 @@ Func EditPos_telelist($cateText, $selectedLine, $text, $currPosArr)
 EndFunc
 
 Func _DelPos_telelist(ByRef $teleList, $selectedLine)
-    Local $range = $selectedLine*4 & "-" & ($selectedLine*4+3)
+    Local $columnCount = _GUICtrlListView_GetColumnCount($g_listview)
+    Local $range = $selectedLine*$columnCount & "-" & ($selectedLine*$columnCount+$columnCount-1)
     _ArrayDelete($teleList, $range)
     ;~ For $i = 0 to UBound($teleList) - 1
         ;~ print("delete " & $selectedLine)

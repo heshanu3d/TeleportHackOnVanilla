@@ -43,7 +43,7 @@ Func InitTeleportList()
     Local $bFileError = @error
     Local $tFileRead = TimerDiff($tTotal)
     print("$g_lineCount : " & $g_lineCount)
-    $columnCount = 4
+    $columnCount = 5
 
     If $bFileError Then
         MsgBox($MB_SYSTEMMODAL, "", "There was an error reading the file. @error: " & $bFileError)
@@ -65,17 +65,21 @@ Func InitTeleportList()
         Local $text = $teleList_whole[$i]
         Local $split = StringSplit($text, $g_telelist_split_str)
 
-        If UBound($split) - 1 = $columnCount Then
-            ; # 格式：一行包含 desc#x#y#z
+        Local $fieldCount = $split[0]
+        If $fieldCount = $columnCount Or $fieldCount = $columnCount - 1 Then
+            ; # 格式：一行包含 desc#x#y#z[#r]
+            ; 5 字段为新格式(含朝向 r)，4 字段为旧格式(无朝向，补空 r 以保持 stride 一致)
+            Local $bPadR = ($fieldCount < $columnCount)
             ; 提取分类名（取描述字段中"-"前面的部分）
             Local $cateText = $split[1]
             Local $dashSplit = StringSplit($cateText, "-")
             If $dashSplit[0] > 0 Then $cateText = $dashSplit[1]
 
             ; 加入 "所有" 列表
-            For $j = 1 To $split[0]
+            For $j = 1 To $fieldCount
                 $allList.Add($split[$j])
             Next
+            If $bPadR Then $allList.Add("")
 
             ; 加入对应分类列表
             If Not $catDict.Exists($cateText) Then
@@ -83,9 +87,10 @@ Func InitTeleportList()
                 $categoryOrder.Add($cateText)
             EndIf
             Local $catList = $catDict.Item($cateText)
-            For $j = 1 To $split[0]
+            For $j = 1 To $fieldCount
                 $catList.Add($split[$j])
             Next
+            If $bPadR Then $catList.Add("")
 
             $i = $i + 1
         Else
@@ -138,8 +143,12 @@ Func InitListview($listview = 0)
     If $listview = 0 Then
         print("launch ui")
         ;~ refactor
-        $listview = GUICtrlCreateListView("        描述        |      x      |      y      |      z      ", 10, 20, 380, 490)
-        GUICtrlSendMsg($listview, $LVM_SETCOLUMNWIDTH, 0, 250)
+        $listview = GUICtrlCreateListView("        描述        |      x      |      y      |      z      |      r      ", 10, 20, 380, 490)
+        GUICtrlSendMsg($listview, $LVM_SETCOLUMNWIDTH, 0, 175)
+        GUICtrlSendMsg($listview, $LVM_SETCOLUMNWIDTH, 1, 58)
+        GUICtrlSendMsg($listview, $LVM_SETCOLUMNWIDTH, 2, 58)
+        GUICtrlSendMsg($listview, $LVM_SETCOLUMNWIDTH, 3, 52)
+        GUICtrlSendMsg($listview, $LVM_SETCOLUMNWIDTH, 4, 37)
         $g_listview = $listview
     Else
         ;~ refactor

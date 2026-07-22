@@ -31,7 +31,7 @@ Func Login()
 
 EndFunc
 
-Func TeleportInterface($x, $y, $z)
+Func TeleportInterface($x, $y, $z, $r = "")
 	; x,y convert should be done here
 	If $g_syncTeleport = True And $g_step = True Then
 		print("cannot select sync-tp step-tp at same time. As operate differect client step-tp is not possible at moment")
@@ -41,10 +41,10 @@ Func TeleportInterface($x, $y, $z)
 		TeleportStepByStep($x, $y, $z)
 	Else
 		If $version = "3.3.5" or $version = "1.12.1" Then
-			WritePosition($y, $x, $z)
+			WritePosition($y, $x, $z, $r)
 		ElseIf $version = "1.12.3" Then
 			;~ WritePosition($x, $y, $z)
-			WritePosition($y, $x, $z)
+			WritePosition($y, $x, $z, $r)
 		EndIf
 		Sleep(40)
 		;Send("{Left}")
@@ -120,7 +120,9 @@ Func Teleport($listview)
         Return
     EndIf
     $array = StringSplit($text, '|')
-    TeleportInterface($array[2], $array[3], $array[4])
+    Local $r = ""
+    If $array[0] >= 5 Then $r = $array[5]
+    TeleportInterface($array[2], $array[3], $array[4], $r)
 EndFunc
 
 Func AppendPos($input, $listview, $cateText)
@@ -151,12 +153,12 @@ EndFunc
 
 Func AddPos($input, $listview, $cateText)
     $currPosArr = ReadPosition()
-    $text = GUICtrlRead($input)
-    $text = $text &"|"& $currPosArr[0] &"|"& $currPosArr[1] &"|"& $currPosArr[2]
+    Local $desc = GUICtrlRead($input)
+    $text = $desc &"|"& $currPosArr[0] &"|"& $currPosArr[1] &"|"& $currPosArr[2] &"|"& $currPosArr[3]
     ;~ print($text)
     GUICtrlCreateListViewItem($text, $listview)
-	;~ AddPos_telelist($cateText, $text, $currPosArr)
-	AddPos_telelist($cateText, $text, $currPosArr)
+	;~ AddPos_telelist($cateText, $desc, $currPosArr)
+	AddPos_telelist($cateText, $desc, $currPosArr)
 EndFunc
 
 Func EditPos($input, $listview, $cateText)
@@ -167,6 +169,7 @@ Func EditPos($input, $listview, $cateText)
     _GUICtrlListView_SetItem($listview, $currPosArr[0], $selectedLine, 1)
     _GUICtrlListView_SetItem($listview, $currPosArr[1], $selectedLine, 2)
     _GUICtrlListView_SetItem($listview, $currPosArr[2], $selectedLine, 3)
+    _GUICtrlListView_SetItem($listview, $currPosArr[3], $selectedLine, 4)
 	;~ EditPos_telelist($cateText, $selectedLine, $text, $currPosArr)
 	EditPos_telelist($cateText, $selectedLine, $text, $currPosArr)
 EndFunc
