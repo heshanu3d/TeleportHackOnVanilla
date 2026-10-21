@@ -84,6 +84,24 @@ def test_category_switch_filters_rows(wired_window):
     assert win._proxy.rowCount() == 2
 
 
+def test_on_top_checkbox_updates_window_flag(wired_window, qtbot):
+    from PySide6.QtCore import Qt
+
+    win, _ = wired_window
+    win.show()
+    assert not win._on_top_cb.isChecked()
+
+    qtbot.mouseClick(win._on_top_cb, Qt.LeftButton)
+    assert win._on_top_cb.isChecked()
+    assert win.windowFlags() & Qt.WindowStaysOnTopHint
+    assert win.isVisible()
+
+    qtbot.mouseClick(win._on_top_cb, Qt.LeftButton)
+    assert not win._on_top_cb.isChecked()
+    assert not win.windowFlags() & Qt.WindowStaysOnTopHint
+    assert win.isVisible()
+
+
 def test_settings_dialog_persists_to_repository(wired_window, tmp_path: Path, monkeypatch):
     """Bypass the modal dialog and verify save() actually writes settings.json."""
     win, _ = wired_window

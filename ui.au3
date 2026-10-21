@@ -238,6 +238,7 @@ Func LaunchUI()
     $fastStep = GUICtrlCreateCheckbox("fastStep", 280, 640, 680, 20)
 
     $home = GUICtrlCreateButton("home",           10,  670, 70, 20)
+    $onTop = GUICtrlCreateCheckbox("OnTop",        100, 670, 70, 20)
 
     $g_log = GUICtrlCreateEdit("",                10,  700, 380, 175, BitOR($ES_AUTOVSCROLL, $WS_VSCROLL))
 
@@ -283,6 +284,8 @@ Func LaunchUI()
                 SwitchListview(GUICtrlRead($comboBox))
             Case $msg = $home
                 Home()
+            Case $msg = $onTop
+                WinSetOnTop($ui, "", BitAND(GUICtrlRead($onTop), $GUI_CHECKED) <> 0)
         EndSelect
     Until $msg = $GUI_EVENT_CLOSE
 EndFunc

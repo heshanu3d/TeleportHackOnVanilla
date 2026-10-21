@@ -240,6 +240,9 @@ class MainWindow(QMainWindow):
         speed_btn.clicked.connect(self._apply_speed)
         speed_row.addWidget(speed_btn)
         speed_row.addStretch(1)
+        self._on_top_cb = QCheckBox("OnTop")
+        self._on_top_cb.toggled.connect(self._on_top_toggled)
+        speed_row.addWidget(self._on_top_cb)
         root.addLayout(speed_row)
 
         # Process list group — compact, fixed-ish height so it doesn't
@@ -283,6 +286,12 @@ class MainWindow(QMainWindow):
         self.addAction(enter_action)
 
     # ---------------------------------------------------------- backend
+
+    def _on_top_toggled(self, checked: bool) -> None:
+        was_visible = self.isVisible()
+        self.setWindowFlag(Qt.WindowStaysOnTopHint, checked)
+        if was_visible:
+            self.show()  # Changing window flags hides a visible Qt window.
 
     def _create_backend(self, pid: Optional[int], error: Optional[str]):
         if error or pid is None or pid == 0:
