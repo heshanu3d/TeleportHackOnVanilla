@@ -11,6 +11,7 @@
 #include <GUIConstantsEx.au3>
 #include <GuiComboBox.au3>
 #include <GuiListView.au3>
+#include <GuiTab.au3>
 
 #include <Misc.au3>
 #include <file.au3>

@@ -5,6 +5,11 @@ Global $DstZOffsetArray[5] = [0x88, 0x28, 0x7C8, 0x1A4, 0x54]
 
 
 Global $g_listview
+Global $g_categoryGrid = 0
+Global $g_categoryGroupRows[5]
+Global $g_categoryTab = 0
+Global $g_categoryComboBox = 0
+Global $g_pendingCategory = ""
 Global $g_input
 Global $g_speed
 Global $g_telelist_split_str = "#"

@@ -8,6 +8,32 @@ Func WM_NOTIFY($hWnd, $Msg, $wParam, $lParam)
     $iCode = DllStructGetData($tNMHDR, "Code")
 
     Switch $hWndFrom
+        Case GUICtrlGetHandle($g_categoryGrid)
+            Switch $iCode
+                Case $NM_CLICK
+                    Local $tActivate = DllStructCreate($tagNMITEMACTIVATE, $lParam)
+                    Local $iRow = DllStructGetData($tActivate, "Index")
+                    Local $iColumn = DllStructGetData($tActivate, "SubItem")
+                    If $iRow >= 0 And $iColumn >= 0 And $iColumn < 3 Then
+                        Local $category = _GUICtrlListView_GetItemText($g_categoryGrid, $iRow, $iColumn)
+                        If $category = "所有" Or $g_teleListDict.Exists($category) Then $g_pendingCategory = $category
+                    EndIf
+                Case $NM_CUSTOMDRAW
+                    Local $tDraw = DllStructCreate($tagNMLVCUSTOMDRAW, $lParam)
+                    Local $stage = DllStructGetData($tDraw, "dwDrawStage")
+                    If $stage = $CDDS_PREPAINT Then Return $CDRF_NOTIFYITEMDRAW
+                    If $stage = $CDDS_ITEMPREPAINT Or $stage = BitOR($CDDS_ITEMPREPAINT, $CDDS_SUBITEM) Then
+                        Local $row = DllStructGetData($tDraw, "dwItemSpec")
+                        For $i = 0 To UBound($g_categoryGroupRows) - 1
+                            If $row = $g_categoryGroupRows[$i] Then
+                                DllStructSetData($tDraw, "clrTextBk", 0xE8E2D8)
+                                DllStructSetData($tDraw, "clrText", 0x3B3025)
+                                If $stage = $CDDS_ITEMPREPAINT Then Return BitOR($CDRF_NEWFONT, $CDRF_NOTIFYSUBITEMDRAW)
+                                Return $CDRF_NEWFONT
+                            EndIf
+                        Next
+                    EndIf
+            EndSwitch
         Case $listview
             Switch $iCode
                 Case $NM_CLICK

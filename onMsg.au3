@@ -278,6 +278,7 @@ Func ReloadUI($listview, $comboBox, ByRef $list, ByRef $playernameList)
 
     Local $t2 = TimerInit()
     InitComboBox($category, $comboBox)
+    RefreshCategoryGrid($category)
     Local $tCombo = TimerDiff($t2)
 
     Local $t3 = TimerInit()

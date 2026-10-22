@@ -8,13 +8,13 @@ Func InitPidAndPlaynameList(ByRef $pidList, ByRef $playernameList)
 			_ArrayAdd($wowPidList, $WowProcessList[$i][1])
 		Next
 		$g_wowPidList = $wowPidList
-		_GUICtrlListBox_Destroy($pidList)
+		_GUICtrlListBox_ResetContent($pidList)
 	EndIf
 	If $playernameList <> 0 Then
-		_GUICtrlListBox_Destroy($playernameList)
+		_GUICtrlListBox_ResetContent($playernameList)
 	EndIf
-	$pidList = GUICtrlCreateList("", 250, 520, 60, 60, $LBS_DISABLENOSCROLL)
-	$playernameList = GUICtrlCreateList("", 310, 520, 60, 60, $LBS_DISABLENOSCROLL)
+	If $pidList = 0 Then $pidList = GUICtrlCreateList("", 250, 555, 60, 60, $LBS_DISABLENOSCROLL)
+	If $playernameList = 0 Then $playernameList = GUICtrlCreateList("", 310, 555, 60, 60, $LBS_DISABLENOSCROLL)
 
 	GUICtrlSetLimit($pidList, 200)
 	GUICtrlSetLimit($playernameList, 200)
@@ -143,7 +143,7 @@ Func InitListview($listview = 0)
     If $listview = 0 Then
         print("launch ui")
         ;~ refactor
-        $listview = GUICtrlCreateListView("        描述        |      x      |      y      |      z      |      r      ", 10, 20, 380, 490)
+        $listview = GUICtrlCreateListView("        描述        |      x      |      y      |      z      |      r      ", 10, 55, 380, 490)
         GUICtrlSendMsg($listview, $LVM_SETCOLUMNWIDTH, 0, 175)
         GUICtrlSendMsg($listview, $LVM_SETCOLUMNWIDTH, 1, 58)
         GUICtrlSendMsg($listview, $LVM_SETCOLUMNWIDTH, 2, 58)
@@ -165,7 +165,7 @@ EndFunc
 
 Func InitComboBox(Byref $category, $comboBox = 0)
     If $comboBox = 0 Then
-        $comboBox = GUICtrlCreateCombo("所有", 10, 00, 140, 20)
+        $comboBox = GUICtrlCreateCombo("所有", 10, 35, 140, 20)
         ;~ _GUICtrlComboBox_SetItemHeight($comboBox, 25) ; 控件显示区高度
         _GUICtrlComboBox_SetItemHeight($comboBox, 25, 1) ; 下拉列表每项高度
     Else
@@ -183,9 +183,62 @@ Func InitComboBox(Byref $category, $comboBox = 0)
     Next
 
     ;~ _GUICtrlComboBox_SetCurSel($comboBox, 0)
+    If $g_category_selected <> "所有" And Not $g_teleListDict.Exists($g_category_selected) Then $g_category_selected = "所有"
     _GUICtrlComboBox_SelectString($comboBox, $g_category_selected)
 
     return $comboBox
+EndFunc
+
+Func CategoryGridGroup($name)
+    Switch $name
+        Case "艾尔文森林", "西部荒野", "赤脊山", "湿地", "暮色森林", "希尔斯布莱德", "阿拉希", "奥特兰克", "丹莫罗", "洛克莫丹", "荒芜之地", "荆棘谷", "灼热峡谷", "悲伤沼泽", "辛特兰", "西瘟疫", "东瘟疫", "诅咒之地"
+            Return 1
+        Case "杜隆塔尔", "贫瘠之地", "多兰纳尔", "泰达希尔", "尘泥沼泽", "凄凉之地", "菲拉斯", "闪光平原", "塔纳利斯", "月光林地", "棘齿城", "安戈洛", "达纳苏斯", "冬泉谷", "希利苏斯"
+            Return 2
+        Case "地狱火半岛", "赞加沼泽", "纳格兰", "泰罗卡森林", "刀锋山", "虚空风暴", "影月谷"
+            Return 3
+        Case "死亡骑士", "嚎风峡湾", "北风苔原", "龙骨荒野", "晶歌森林", "祖达克", "索拉查盆地", "灰熊丘陵", "风暴峭壁", "冰冠冰川"
+            Return 4
+    EndSwitch
+    Return 0
+EndFunc
+
+Func RefreshCategoryGrid(ByRef $category)
+    If $g_categoryGrid = 0 Then Return
+    Local $groups[5] = ["杂项", "东部王国", "卡利姆多", "燃烧的远征", "巫妖王之怒"]
+    _GUICtrlListView_BeginUpdate($g_categoryGrid)
+    _GUICtrlListView_DeleteAllItems($g_categoryGrid)
+    For $group = 0 To 4
+        If $group > 0 Then _GUICtrlListView_AddItem($g_categoryGrid, "")
+        $g_categoryGroupRows[$group] = _GUICtrlListView_AddItem($g_categoryGrid, "【" & $groups[$group] & "】")
+        Local $column = 0
+        Local $row = -1
+        If $group = 0 Then
+            $row = _GUICtrlListView_AddItem($g_categoryGrid, "所有")
+            $column = 1
+        EndIf
+        For $i = 0 To UBound($category) - 1
+            If CategoryGridGroup($category[$i]) <> $group Then ContinueLoop
+            If $column = 0 Then
+                $row = _GUICtrlListView_AddItem($g_categoryGrid, $category[$i])
+            Else
+                _GUICtrlListView_AddSubItem($g_categoryGrid, $row, $category[$i], $column)
+            EndIf
+            $column = Mod($column + 1, 3)
+        Next
+    Next
+    _GUICtrlListView_EndUpdate($g_categoryGrid)
+EndFunc
+
+Func ApplyPendingCategory()
+    If $g_pendingCategory = "" Then Return
+    Local $selectedCategory = $g_pendingCategory
+    $g_pendingCategory = ""
+    Local $comboIndex = _GUICtrlComboBox_FindStringExact($g_categoryComboBox, $selectedCategory)
+    If $comboIndex < 0 Then Return
+    _GUICtrlComboBox_SetCurSel($g_categoryComboBox, $comboIndex)
+    SwitchListview($selectedCategory)
+    _GUICtrlTab_ActivateTab($g_categoryTab, 0)
 EndFunc
 
 Func GetListFd($op = $FO_READ)
@@ -201,46 +254,59 @@ Func LaunchUI()
 		Return
 	EndIf
 
-    $ui = GUICreate($winTitle, 400, 880, 100, 200, -1, $WS_EX_ACCEPTFILES)
+    $ui = GUICreate($winTitle, 400, 925, 100, 80, -1, $WS_EX_ACCEPTFILES)
     GUISetBkColor(0x00E0FFFF) ; will change background color
-    GUISetState(@SW_SHOW)
+    $g_categoryTab = GUICtrlCreateTab(0, 0, 400, 920)
+    GUICtrlCreateTabItem("坐标点")
     
     ;~ read teleport points from file
     Local $category = InitTeleportList()
 
     $comboBox = InitComboBox($category)
+    $g_categoryComboBox = $comboBox
 
     $listview = InitListview()
     $g_listview = $listview
-	$g_input = GUICtrlCreateInput("",      10,  520, 210, 20)
+	$g_input = GUICtrlCreateInput("",      10,  555, 210, 20)
 	Local $pidList = 0
 	Local $playernameList = 0
 	InitPidAndPlaynameList($pidList, $playernameList)
-	$sync = GUICtrlCreateCheckbox("sync-tp", 	10,  550, 60, 20)
-	$step = GUICtrlCreateCheckbox("step-tp", 	90,  550, 60, 20)
-	$farmEYun = GUICtrlCreateCheckbox("厄运",   170, 550, 60, 20)
-    $addPos = GUICtrlCreateButton("addPos",     10,  580, 70, 20)
-    $editPos = GUICtrlCreateButton("editPos",   100, 580, 70, 20)
-    $delPos = GUICtrlCreateButton("delPos",     190, 580, 70, 20)
+	$sync = GUICtrlCreateCheckbox("sync-tp", 	10,  585, 60, 20)
+	$step = GUICtrlCreateCheckbox("step-tp", 	90,  585, 60, 20)
+	$farmEYun = GUICtrlCreateCheckbox("厄运",   170, 585, 60, 20)
+    $addPos = GUICtrlCreateButton("addPos",     10,  615, 70, 20)
+    $editPos = GUICtrlCreateButton("editPos",   100, 615, 70, 20)
+    $delPos = GUICtrlCreateButton("delPos",     190, 615, 70, 20)
 
-    $teleport = GUICtrlCreateButton("Teleport", 280, 580, 100, 50)
+    $teleport = GUICtrlCreateButton("Teleport", 280, 615, 100, 50)
 
-    $insertPos =GUICtrlCreateButton("insertPos",10,  610, 70, 20)
-    $save = GUICtrlCreateButton("save",         100, 610, 70, 20)
-    $reload = GUICtrlCreateButton("reload",     190, 610, 70, 20)
+    $insertPos =GUICtrlCreateButton("insertPos",10,  645, 70, 20)
+    $save = GUICtrlCreateButton("save",         100, 645, 70, 20)
+    $reload = GUICtrlCreateButton("reload",     190, 645, 70, 20)
 
-    $appendPos = GUICtrlCreateButton("appendPos",           10,  640, 70, 20)
+    $appendPos = GUICtrlCreateButton("appendPos",           10,  675, 70, 20)
 
-    $g_speed = GUICtrlCreateInput("",           100, 640, 35, 20)
-    $speed_swi = GUICtrlCreateCheckbox("speed", 135, 640, 60, 20)
+    $g_speed = GUICtrlCreateInput("",           100, 675, 35, 20)
+    $speed_swi = GUICtrlCreateCheckbox("speed", 135, 675, 60, 20)
 
-    $login = GUICtrlCreateButton("login",       190, 640, 70, 20)
-    $fastStep = GUICtrlCreateCheckbox("fastStep", 280, 640, 680, 20)
+    $login = GUICtrlCreateButton("login",       190, 675, 70, 20)
+    $fastStep = GUICtrlCreateCheckbox("fastStep", 280, 675, 100, 20)
 
-    $home = GUICtrlCreateButton("home",           10,  670, 70, 20)
-    $onTop = GUICtrlCreateCheckbox("OnTop",        100, 670, 70, 20)
+    $home = GUICtrlCreateButton("home",           10,  705, 70, 20)
+    $onTop = GUICtrlCreateCheckbox("OnTop",        100, 705, 70, 20)
 
-    $g_log = GUICtrlCreateEdit("",                10,  700, 380, 175, BitOR($ES_AUTOVSCROLL, $WS_VSCROLL))
+    $g_log = GUICtrlCreateEdit("",                10,  735, 380, 175, BitOR($ES_AUTOVSCROLL, $WS_VSCROLL))
+
+    GUICtrlCreateTabItem("分类导航")
+    $g_categoryGrid = GUICtrlCreateListView("分类|分类|分类", 10, 40, 380, 865)
+    For $column = 0 To 2
+        _GUICtrlListView_SetColumnWidth($g_categoryGrid, $column, 116)
+    Next
+    GUICtrlSetFont($g_categoryGrid, 10, 700, 0, "Microsoft YaHei UI")
+    _GUICtrlListView_SetExtendedListViewStyle($g_categoryGrid, BitOR($LVS_EX_GRIDLINES, $LVS_EX_DOUBLEBUFFER, $LVS_EX_FULLROWSELECT))
+    RefreshCategoryGrid($category)
+    GUICtrlCreateTabItem("")
+    GUISetState(@SW_SHOW)
 
     ;~ richEdit loaded too slow
     ;~ $g_log = _GUICtrlRichEdit_Create($ui, "", 10, 610, 380, 320, BitOR($ES_MULTILINE, $WS_VSCROLL, $ES_AUTOVSCROLL))
@@ -248,6 +314,7 @@ Func LaunchUI()
     GUIRegisterMsg($WM_NOTIFY, "WM_NOTIFY")
     Do
         $msg = GUIGetMsg()
+        ApplyPendingCategory()
         Select
             Case $msg = $login
                 Login()
