@@ -131,7 +131,14 @@ For $column = 0 To 2
 Next
 Local $pidList = 0, $playernameList = 0
 $g_selectPid = @AutoItPID
+SwitchListview("所有")
+If _GUICtrlListView_GetItemCount($g_listview) < 40 Then Fail("not enough rows to test reload scroll")
+Local $rowRect = _GUICtrlListView_GetItemRect($g_listview, 0)
+_GUICtrlListView_Scroll($g_listview, 0, 30 * ($rowRect[3] - $rowRect[1]))
+Local $topBeforeReload = _GUICtrlListView_GetTopIndex($g_listview)
+If $topBeforeReload < 1 Then Fail("could not scroll list before reload")
 ReloadUI($g_listview, $pidList, $playernameList)
+If _GUICtrlListView_GetTopIndex($g_listview) <> $topBeforeReload Then Fail("reload did not preserve the first visible row")
 If $g_recentTeleportCount <> 20 Or _GUICtrlListView_GetItemCount($g_recentListview) <> 20 Then Fail("reload cleared recent list")
 If _GUICtrlListView_GetItemText($g_recentListview, 0) <> "again" Or _GUICtrlListView_GetItemText($g_recentListview, 1) <> "point 21" Then Fail("reload changed recent order")
 CheckRecentDoubleClick($ui, 1, 1)

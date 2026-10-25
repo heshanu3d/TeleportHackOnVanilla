@@ -21,7 +21,7 @@ set "EXITCODE=%ERRORLEVEL%"
 if not "%EXITCODE%"=="0" (
     echo.
     echo [ERROR] teleport-hack exited with code %EXITCODE%.
-    echo         If this is the first run, execute install.bat once first.
+    echo         If this is the first run, execute run.bat once first.
 )
 goto :end
 

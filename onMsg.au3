@@ -258,6 +258,8 @@ EndFunc
 
 Func ReloadUI($listview, ByRef $list, ByRef $playernameList)
     Local $tReload = TimerInit()
+    Local $topIndex = _GUICtrlListView_GetTopIndex($listview)
+    Local $rowRect = _GUICtrlListView_GetItemRect($listview, 0)
 
     Local $t1 = TimerInit()
     Local $category = InitTeleportList()
@@ -271,6 +273,10 @@ Func ReloadUI($listview, ByRef $list, ByRef $playernameList)
 
     Local $t3 = TimerInit()
     $g_listview = InitListview($listview)
+    If $topIndex > 0 And IsArray($rowRect) And _GUICtrlListView_GetItemCount($listview) > 0 Then
+        Local $rowHeight = $rowRect[3] - $rowRect[1]
+        If $rowHeight > 0 Then _GUICtrlListView_Scroll($listview, 0, $topIndex * $rowHeight)
+    EndIf
     Local $tListview = TimerDiff($t3)
 
     Local $t4 = TimerInit()

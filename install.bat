@@ -1,32 +1,52 @@
 @echo off
-REM ============================================================
-REM TeleportHack - install-only helper.
-REM Runs "pip install -e win[windows,dev]" and exits. Use this
-REM after pulling new dependencies in pyproject.toml; for normal
-REM day-to-day code edits no re-install is needed (editable mode).
-REM ============================================================
+setlocal EnableExtensions EnableDelayedExpansion
+pushd "%~dp0" || exit /b 1
 
-setlocal enableextensions
-pushd "%~dp0"
-
-if not defined PYTHON set "PYTHON=python"
-
-"%PYTHON%" --version >nul 2>&1
-if errorlevel 1 goto :no_python
-
-echo === Installing teleport-hack (editable, with windows + dev extras) ===
-"%PYTHON%" -m pip install -e "win[windows,dev]"
-set "EXITCODE=%ERRORLEVEL%"
-goto :end
-
-:no_python
-echo [ERROR] Python not found. Set PYTHON=full\path\to\python.exe
 set "EXITCODE=1"
-goto :end
+set "BUILD_DIR=%CD%\build"
+set "DEST=%~1"
+if not defined DEST if exist ".install.ini" (
+    set "IN_INSTALL_SECTION="
+    for /f "usebackq tokens=1,* delims==" %%K in (".install.ini") do (
+        if /i "%%K"=="[install]" set "IN_INSTALL_SECTION=1"
+        if defined IN_INSTALL_SECTION if /i "%%K"=="path" set "DEST=%%L"
+    )
+)
+if not exist "!BUILD_DIR!\version.txt" (
+    echo [ERROR] No build found. Run build.bat first.
+    goto :done
+)
+set /p "VERSION=" < "!BUILD_DIR!\version.txt"
+if not defined VERSION goto :missing_build
+for %%V in (1.12.1 1.12.3 3.3.5) do (
+    if not exist "!BUILD_DIR!\Teleportors-%%V-!VERSION!.exe" goto :missing_build
+)
+if not defined DEST (
+    echo No install path configured; release files are already in !BUILD_DIR!.
+    set "EXITCODE=0"
+    goto :done
+)
+if not exist "!DEST!" mkdir "!DEST!" || goto :done
+for %%D in ("!DEST!\.") do set "DEST_FULL=%%~fD"
+if /i "!DEST_FULL!"=="!BUILD_DIR!" (
+    echo Release files are already in !BUILD_DIR!.
+    set "EXITCODE=0"
+    goto :done
+)
+for %%V in (1.12.1 1.12.3 3.3.5) do (
+    copy /Y "!BUILD_DIR!\Teleportors-%%V-!VERSION!.exe" "!DEST!\" >nul || goto :done
+)
+for %%F in (favlist.fav hotkey.txt) do (
+    if exist "!BUILD_DIR!\%%F" if not exist "!DEST!\%%F" (
+        copy "!BUILD_DIR!\%%F" "!DEST!\%%F" >nul || goto :done
+    )
+)
+echo Installed !VERSION! to !DEST!
+set "EXITCODE=0"
+goto :done
 
-:end
+:missing_build
+echo [ERROR] Build is incomplete. Run build.bat first.
+:done
 popd
-echo.
-echo (exit code: %EXITCODE%)
-pause
-endlocal
+endlocal & exit /b %EXITCODE%

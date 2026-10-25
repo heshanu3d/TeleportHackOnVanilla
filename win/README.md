@@ -44,17 +44,15 @@ pip install -e ".[dev]"  # add ",windows" on Windows machines
 
 ### Windows shortcut (.bat helpers)
 
-Three batch files at the repository root automate the common workflows
-so you don't have to retype `pip install` and `python -m teleport_hack`
-on every iteration:
+Two batch files at the repository root automate the Python workflows
+so you don't have to retype `pip install` and `python -m teleport_hack`:
 
 | Script | Equivalent commands | Use when |
 | ------ | ------------------- | -------- |
-| `install.bat` | `python -m pip install -e "win[windows,dev]"` | A new dependency was added to `pyproject.toml` |
 | `start.bat`   | `python -m teleport_hack [args...]`           | You edited code under `win\` and want to launch |
-| `run.bat`     | `install.bat` then `start.bat` in one go      | First run, or unsure of state |
+| `run.bat`     | Editable pip install, then launch            | First run, or after dependency changes |
 
-All three honour a `PYTHON` env var (e.g.
+Both honour a `PYTHON` env var (e.g.
 `set PYTHON=D:\Python3_10\python.exe`) for non-default interpreters,
 and pause at the end so any error stays visible when launched from
 Explorer. `start.bat` / `run.bat` forward extra args to

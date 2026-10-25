@@ -2,3 +2,5 @@ useless
 *.exe
 .vscode
 /teleport_ui.ini
+/build/
+/.install.ini
