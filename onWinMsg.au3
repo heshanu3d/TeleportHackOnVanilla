@@ -8,6 +8,12 @@ Func WM_NOTIFY($hWnd, $Msg, $wParam, $lParam)
     $iCode = DllStructGetData($tNMHDR, "Code")
 
     Switch $hWndFrom
+        Case GUICtrlGetHandle($g_recentListview)
+            If $iCode = $NM_DBLCLK Then
+                Local $tRecent = DllStructCreate($tagNMITEMACTIVATE, $lParam)
+                Local $recentRow = DllStructGetData($tRecent, "Index")
+                If $recentRow >= 0 And $recentRow < $g_recentTeleportCount Then $g_pendingRecentTeleport = $recentRow
+            EndIf
         Case GUICtrlGetHandle($g_categoryGrid)
             Switch $iCode
                 Case $NM_CLICK
@@ -75,5 +81,5 @@ Func TeleportDBClick($listview)
     $array = StringSplit($text, '|')
     Local $r = ""
     If $array[0] >= 5 Then $r = $array[5]
-    TeleportInterface($array[2], $array[3], $array[4], $r)
+    TeleportInterface($array[2], $array[3], $array[4], $r, $array[1])
 EndFunc

@@ -9,7 +9,6 @@
 #include <GuiEdit.au3>
 #include <GuiListBox.au3>
 #include <GUIConstantsEx.au3>
-#include <GuiComboBox.au3>
 #include <GuiListView.au3>
 #include <GuiTab.au3>
 
@@ -28,6 +27,7 @@
 #include <onMsg.au3>
 #include <onWinMsg.au3>
 #include <hotkey.au3>
+#include <about.au3>
 #include <ui.au3>
 #include <bot/bot.au3>
 #include <bot/stsm.au3>

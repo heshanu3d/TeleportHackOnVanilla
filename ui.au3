@@ -13,24 +13,76 @@ Func InitPidAndPlaynameList(ByRef $pidList, ByRef $playernameList)
 	If $playernameList <> 0 Then
 		_GUICtrlListBox_ResetContent($playernameList)
 	EndIf
-	If $pidList = 0 Then $pidList = GUICtrlCreateList("", 250, 555, 60, 60, $LBS_DISABLENOSCROLL)
-	If $playernameList = 0 Then $playernameList = GUICtrlCreateList("", 310, 555, 60, 60, $LBS_DISABLENOSCROLL)
+	If $pidList = 0 Then $pidList = GUICtrlCreateList("", 250, 620, 60, 50, $LBS_DISABLENOSCROLL)
+	If $playernameList = 0 Then $playernameList = GUICtrlCreateList("", 315, 620, 60, 50, $LBS_DISABLENOSCROLL)
 
 	GUICtrlSetLimit($pidList, 200)
 	GUICtrlSetLimit($playernameList, 200)
 	$playerNames = Sync(GetPlayerName)
 	If UBound($playerNames) <> UBound($g_wowPidList) Then
 		print("UBound($playerNames) <> UBound($g_wowPidList)")
-		Return
 	EndIf
 	For $i = 1 to UBound($g_wowPidList) - 1
 		GUICtrlSetData($pidList, $g_wowPidList[$i])
-		If $playerNames[$i] <> "" Then
-			GUICtrlSetData($playernameList, $playerNames[$i])
+		If $i < UBound($playerNames) Then
+			If $playerNames[$i] <> "" Then GUICtrlSetData($playernameList, $playerNames[$i])
 		EndIf
 		;print($g_wowPidList[$i])
 		;print($playerNames[$i])
 	Next
+	SelectOnlyWowPid($pidList, $playernameList)
+EndFunc
+
+Func SelectOnlyWowPid($pidList, $playernameList)
+	If _GUICtrlListBox_GetCount($pidList) <> 1 Then Return
+	If _GUICtrlListBox_SetCurSel($pidList, 0) < 0 Then Return
+	If _GUICtrlListBox_GetCount($playernameList) = 1 Then _GUICtrlListBox_SetCurSel($playernameList, 0)
+	If $g_syncTeleport Then
+		$g_selectPid = Number(_GUICtrlListBox_GetText($pidList, 0))
+		$g_hwnd = _WinGetHandleByPidAndCls($g_selectPid, "GxWindowClassD3d")
+	Else
+		SelectSingleWowPid($pidList)
+	EndIf
+EndFunc
+
+Func ShouldReloadForSingleWowProcess(ByRef $wowProcesses, $selectedPid)
+    If Not IsArray($wowProcesses) Then Return False
+    If $wowProcesses[0][0] <> 1 Then Return False
+    Return Number($wowProcesses[1][1]) <> Number($selectedPid)
+EndFunc
+
+Func CheckWowPidForReload($listview, ByRef $pidList, ByRef $playernameList)
+    Local $wowProcesses = ProcessList($exe)
+    If Not ShouldReloadForSingleWowProcess($wowProcesses, $g_selectPid) Then Return False
+    print("WoW PID changed: " & $g_selectPid & " -> " & $wowProcesses[1][1] & "; reloading")
+    ReloadUI($listview, $pidList, $playernameList)
+    Return True
+EndFunc
+
+Func ParseWowPidPollSeconds($value, $fallback = 30)
+    Local $text = StringStripWS(String($value), 3)
+    If Not StringIsInt($text) Then Return $fallback
+    Local $seconds = Int($text)
+    If $seconds < 1 Or $seconds > 3600 Then Return $fallback
+    Return $seconds
+EndFunc
+
+Func LoadWowPidPollInterval()
+    Local $seconds = ParseWowPidPollSeconds(IniRead($g_wowPidPollSettingsPath, "Timer", "pid_poll_seconds", "30"))
+    $g_wowPidPollIntervalMs = $seconds * 1000
+    Return $seconds
+EndFunc
+
+Func ApplyWowPidPollInterval($input)
+    Local $seconds = ParseWowPidPollSeconds(GUICtrlRead($input), 0)
+    If $seconds = 0 Then
+        GUICtrlSetData($input, Int($g_wowPidPollIntervalMs / 1000))
+        Return False
+    EndIf
+    GUICtrlSetData($input, $seconds)
+    $g_wowPidPollIntervalMs = $seconds * 1000
+    If Not IniWrite($g_wowPidPollSettingsPath, "Timer", "pid_poll_seconds", $seconds) Then print("Failed to save WoW PID poll interval")
+    Return True
 EndFunc
 
 Func InitTeleportList()
@@ -143,7 +195,7 @@ Func InitListview($listview = 0)
     If $listview = 0 Then
         print("launch ui")
         ;~ refactor
-        $listview = GUICtrlCreateListView("        描述        |      x      |      y      |      z      |      r      ", 10, 55, 380, 490)
+        $listview = GUICtrlCreateListView("        描述        |      x      |      y      |      z      |      r      ", 10, 35, 380, 400)
         GUICtrlSendMsg($listview, $LVM_SETCOLUMNWIDTH, 0, 175)
         GUICtrlSendMsg($listview, $LVM_SETCOLUMNWIDTH, 1, 58)
         GUICtrlSendMsg($listview, $LVM_SETCOLUMNWIDTH, 2, 58)
@@ -163,41 +215,15 @@ Func InitListview($listview = 0)
     return SwitchListviewWithCategory($g_category_selected)
 EndFunc
 
-Func InitComboBox(Byref $category, $comboBox = 0)
-    If $comboBox = 0 Then
-        $comboBox = GUICtrlCreateCombo("所有", 10, 35, 140, 20)
-        ;~ _GUICtrlComboBox_SetItemHeight($comboBox, 25) ; 控件显示区高度
-        _GUICtrlComboBox_SetItemHeight($comboBox, 25, 1) ; 下拉列表每项高度
-    Else
-        ;~ print("InitComboBox combobox delete start  with " & _GUICtrlComboBox_GetCount($comboBox))
-        For $i = _GUICtrlComboBox_GetCount($comboBox) - 1 to 0 Step - 1
-            _GUICtrlComboBox_DeleteString($comboBox, $i)
-            ;~ print("InitComboBox combobox delete " & $i)
-        Next
-        GUICtrlSetData($comboBox, "所有")
-    EndIf
-
-    Local $i
-    For $i = 0 to UBound($category) - 1
-        GUICtrlSetData($comboBox, $category[$i])
-    Next
-
-    ;~ _GUICtrlComboBox_SetCurSel($comboBox, 0)
-    If $g_category_selected <> "所有" And Not $g_teleListDict.Exists($g_category_selected) Then $g_category_selected = "所有"
-    _GUICtrlComboBox_SelectString($comboBox, $g_category_selected)
-
-    return $comboBox
-EndFunc
-
 Func CategoryGridGroup($name)
     Switch $name
-        Case "艾尔文森林", "西部荒野", "赤脊山", "湿地", "暮色森林", "希尔斯布莱德", "阿拉希", "奥特兰克", "丹莫罗", "洛克莫丹", "荒芜之地", "荆棘谷", "灼热峡谷", "悲伤沼泽", "辛特兰", "西瘟疫", "东瘟疫", "诅咒之地"
+        Case "艾尔文森林", "西部荒野", "赤脊山", "湿地", "暮色森林", "希尔斯布莱德", "阿拉希", "奥特兰克", "丹莫罗", "洛克莫丹", "荒芜之地", "荆棘谷", "灼热峡谷", "悲伤沼泽", "辛特兰", "诅咒之地", "燃烧平原", "西瘟疫", "东瘟疫"
             Return 1
-        Case "杜隆塔尔", "贫瘠之地", "多兰纳尔", "泰达希尔", "尘泥沼泽", "凄凉之地", "菲拉斯", "闪光平原", "塔纳利斯", "月光林地", "棘齿城", "安戈洛", "达纳苏斯", "冬泉谷", "希利苏斯"
+        Case "泰达希尔", "灰谷", "闪光平原", "杜隆塔尔", "贫瘠之地", "尘泥沼泽", "凄凉之地", "菲拉斯", "塔纳利斯", "月光林地", "棘齿城", "安戈洛", "达纳苏斯", "冬泉谷", "希利苏斯"
             Return 2
         Case "地狱火半岛", "赞加沼泽", "纳格兰", "泰罗卡森林", "刀锋山", "虚空风暴", "影月谷"
             Return 3
-        Case "死亡骑士", "嚎风峡湾", "北风苔原", "龙骨荒野", "晶歌森林", "祖达克", "索拉查盆地", "灰熊丘陵", "风暴峭壁", "冰冠冰川"
+        Case "死亡骑士", "秘血岛", "秘蓝岛", "嚎风峡湾", "北风苔原", "龙骨荒野", "晶歌森林", "祖达克", "索拉查盆地", "灰熊丘陵", "风暴峭壁", "冰冠冰川"
             Return 4
     EndSwitch
     Return 0
@@ -230,14 +256,59 @@ Func RefreshCategoryGrid(ByRef $category)
     _GUICtrlListView_EndUpdate($g_categoryGrid)
 EndFunc
 
+Func RefreshRecentTeleportList()
+    If $g_recentListview = 0 Then Return
+    _GUICtrlListView_BeginUpdate($g_recentListview)
+    _GUICtrlListView_DeleteAllItems($g_recentListview)
+    For $i = 0 To $g_recentTeleportCount - 1
+        Local $row = _GUICtrlListView_AddItem($g_recentListview, $g_recentTeleports[$i][0])
+        For $column = 1 To 3
+            _GUICtrlListView_AddSubItem($g_recentListview, $row, $g_recentTeleports[$i][$column], $column)
+        Next
+    Next
+    _GUICtrlListView_EndUpdate($g_recentListview)
+EndFunc
+
+Func RecordRecentTeleport($x, $y, $z, $r = "", $label = "")
+    If $label = "" Then $label = "坐标点"
+    Local $existing = -1
+    For $i = 0 To $g_recentTeleportCount - 1
+        If String($g_recentTeleports[$i][1]) = String($x) And String($g_recentTeleports[$i][2]) = String($y) And String($g_recentTeleports[$i][3]) = String($z) Then
+            $existing = $i
+            ExitLoop
+        EndIf
+    Next
+    If $existing = -1 Then
+        If $g_recentTeleportCount < $g_recentTeleportLimit Then $g_recentTeleportCount += 1
+        $existing = $g_recentTeleportCount - 1
+    EndIf
+    For $i = $existing To 1 Step -1
+        For $column = 0 To 4
+            $g_recentTeleports[$i][$column] = $g_recentTeleports[$i - 1][$column]
+        Next
+    Next
+    $g_recentTeleports[0][0] = $label
+    $g_recentTeleports[0][1] = $x
+    $g_recentTeleports[0][2] = $y
+    $g_recentTeleports[0][3] = $z
+    $g_recentTeleports[0][4] = $r
+    RefreshRecentTeleportList()
+EndFunc
+
+Func ApplyPendingRecentTeleport()
+    Local $row = $g_pendingRecentTeleport
+    $g_pendingRecentTeleport = -1
+    If $row < 0 Or $row >= $g_recentTeleportCount Then Return
+    TeleportInterface($g_recentTeleports[$row][1], $g_recentTeleports[$row][2], $g_recentTeleports[$row][3], $g_recentTeleports[$row][4], $g_recentTeleports[$row][0])
+EndFunc
+
 Func ApplyPendingCategory()
     If $g_pendingCategory = "" Then Return
     Local $selectedCategory = $g_pendingCategory
     $g_pendingCategory = ""
-    Local $comboIndex = _GUICtrlComboBox_FindStringExact($g_categoryComboBox, $selectedCategory)
-    If $comboIndex < 0 Then Return
-    _GUICtrlComboBox_SetCurSel($g_categoryComboBox, $comboIndex)
+    If $selectedCategory <> "所有" And Not $g_teleListDict.Exists($selectedCategory) Then Return
     SwitchListview($selectedCategory)
+    If $g_categoryLabel <> 0 Then GUICtrlSetData($g_categoryLabel, "当前：" & $selectedCategory)
     _GUICtrlTab_ActivateTab($g_categoryTab, 0)
 EndFunc
 
@@ -256,46 +327,37 @@ Func LaunchUI()
 
     $ui = GUICreate($winTitle, 400, 925, 100, 80, -1, $WS_EX_ACCEPTFILES)
     GUISetBkColor(0x00E0FFFF) ; will change background color
+    Local $pollSeconds = LoadWowPidPollInterval()
     $g_categoryTab = GUICtrlCreateTab(0, 0, 400, 920)
     GUICtrlCreateTabItem("坐标点")
-    
-    ;~ read teleport points from file
+    $g_log = GUICtrlCreateEdit("", 10, 735, 380, 175, BitOR($ES_AUTOVSCROLL, $WS_VSCROLL))
+
     Local $category = InitTeleportList()
-
-    $comboBox = InitComboBox($category)
-    $g_categoryComboBox = $comboBox
-
     $listview = InitListview()
     $g_listview = $listview
-	$g_input = GUICtrlCreateInput("",      10,  555, 210, 20)
+
+    GUICtrlCreateLabel("最近使用的坐标", 10, 443, 180, 20)
+    $g_categoryLabel = GUICtrlCreateLabel("当前：" & $g_category_selected, 190, 443, 200, 20, $SS_RIGHT)
+    $g_recentListview = GUICtrlCreateListView("最近使用|x|y|z", 10, 463, 380, 147)
+    _GUICtrlListView_SetColumnWidth($g_recentListview, 0, 160)
+    _GUICtrlListView_SetColumnWidth($g_recentListview, 1, 72)
+    _GUICtrlListView_SetColumnWidth($g_recentListview, 2, 72)
+    _GUICtrlListView_SetColumnWidth($g_recentListview, 3, 60)
+    _GUICtrlListView_SetExtendedListViewStyle($g_recentListview, $LVS_EX_FULLROWSELECT)
+    RefreshRecentTeleportList()
+
+	$g_input = GUICtrlCreateInput("", 10, 620, 225, 22)
 	Local $pidList = 0
 	Local $playernameList = 0
 	InitPidAndPlaynameList($pidList, $playernameList)
-	$sync = GUICtrlCreateCheckbox("sync-tp", 	10,  585, 60, 20)
-	$step = GUICtrlCreateCheckbox("step-tp", 	90,  585, 60, 20)
-	$farmEYun = GUICtrlCreateCheckbox("厄运",   170, 585, 60, 20)
-    $addPos = GUICtrlCreateButton("addPos",     10,  615, 70, 20)
-    $editPos = GUICtrlCreateButton("editPos",   100, 615, 70, 20)
-    $delPos = GUICtrlCreateButton("delPos",     190, 615, 70, 20)
-
-    $teleport = GUICtrlCreateButton("Teleport", 280, 615, 100, 50)
-
-    $insertPos =GUICtrlCreateButton("insertPos",10,  645, 70, 20)
-    $save = GUICtrlCreateButton("save",         100, 645, 70, 20)
-    $reload = GUICtrlCreateButton("reload",     190, 645, 70, 20)
-
-    $appendPos = GUICtrlCreateButton("appendPos",           10,  675, 70, 20)
-
-    $g_speed = GUICtrlCreateInput("",           100, 675, 35, 20)
-    $speed_swi = GUICtrlCreateCheckbox("speed", 135, 675, 60, 20)
-
-    $login = GUICtrlCreateButton("login",       190, 675, 70, 20)
-    $fastStep = GUICtrlCreateCheckbox("fastStep", 280, 675, 100, 20)
-
-    $home = GUICtrlCreateButton("home",           10,  705, 70, 20)
-    $onTop = GUICtrlCreateCheckbox("OnTop",        100, 705, 70, 20)
-
-    $g_log = GUICtrlCreateEdit("",                10,  735, 380, 175, BitOR($ES_AUTOVSCROLL, $WS_VSCROLL))
+    $addPos = GUICtrlCreateButton("addPos", 10, 650, 70, 22)
+    $editPos = GUICtrlCreateButton("editPos", 88, 650, 70, 22)
+    $delPos = GUICtrlCreateButton("delPos", 166, 650, 70, 22)
+    $insertPos = GUICtrlCreateButton("insertPos", 10, 680, 85, 22)
+    $appendPos = GUICtrlCreateButton("appendPos", 100, 680, 85, 22)
+    $save = GUICtrlCreateButton("save", 190, 680, 85, 22)
+    $reload = GUICtrlCreateButton("reload", 280, 680, 100, 22)
+    $onTop = GUICtrlCreateCheckbox("OnTop", 10, 710, 75, 20)
 
     GUICtrlCreateTabItem("分类导航")
     $g_categoryGrid = GUICtrlCreateListView("分类|分类|分类", 10, 40, 380, 865)
@@ -305,36 +367,61 @@ Func LaunchUI()
     GUICtrlSetFont($g_categoryGrid, 10, 700, 0, "Microsoft YaHei UI")
     _GUICtrlListView_SetExtendedListViewStyle($g_categoryGrid, BitOR($LVS_EX_GRIDLINES, $LVS_EX_DOUBLEBUFFER, $LVS_EX_FULLROWSELECT))
     RefreshCategoryGrid($category)
+
+    GUICtrlCreateTabItem("设置")
+    GUICtrlCreateLabel("传送设置", 16, 44, 120, 20)
+    $sync = GUICtrlCreateCheckbox("sync-tp", 16, 72, 82, 22)
+    $step = GUICtrlCreateCheckbox("step-tp", 112, 72, 82, 22)
+    $farmEYun = GUICtrlCreateCheckbox("厄运", 208, 72, 75, 22)
+    $fastStep = GUICtrlCreateCheckbox("fastStep", 290, 72, 90, 22)
+    $g_speed = GUICtrlCreateInput("", 16, 106, 60, 22)
+    $speed_swi = GUICtrlCreateCheckbox("speed", 88, 106, 80, 22)
+    GUICtrlCreateLabel("其他操作", 16, 152, 120, 20)
+    $home = GUICtrlCreateButton("home", 16, 180, 88, 26)
+    $login = GUICtrlCreateButton("login", 112, 180, 88, 26)
+    GUICtrlCreateLabel("WoW PID 查询间隔", 16, 238, 180, 20)
+    Local $pidPollInput = GUICtrlCreateInput($pollSeconds, 16, 266, 64, 22, $ES_NUMBER)
+    GUICtrlSetLimit($pidPollInput, 4)
+    GUICtrlCreateLabel("秒", 88, 269, 28, 20)
+    Local $applyPollInterval = GUICtrlCreateButton("应用", 124, 264, 70, 26)
+
+    GUICtrlCreateTabItem("关于")
+    GUICtrlCreateLabel("TeleportHack On Vanilla and WLK", 16, 42, 365, 24)
+    GUICtrlCreateLabel("作者：shan.he", 16, 72, 365, 22)
+    GUICtrlCreateLabel("版本更新日志", 16, 110, 365, 22)
+    Local $releaseNotes = GUICtrlCreateEdit(GetReleaseNotes(), 16, 138, 368, 755, BitOR($ES_READONLY, $ES_MULTILINE, $WS_VSCROLL, $ES_AUTOVSCROLL))
+    GUICtrlSetFont($releaseNotes, 9, 400, 0, "Microsoft YaHei UI")
     GUICtrlCreateTabItem("")
     GUISetState(@SW_SHOW)
 
-    ;~ richEdit loaded too slow
-    ;~ $g_log = _GUICtrlRichEdit_Create($ui, "", 10, 610, 380, 320, BitOR($ES_MULTILINE, $WS_VSCROLL, $ES_AUTOVSCROLL))
-
     GUIRegisterMsg($WM_NOTIFY, "WM_NOTIFY")
+    Local $pidPollTimer = TimerInit()
     Do
         $msg = GUIGetMsg()
         ApplyPendingCategory()
+        ApplyPendingRecentTeleport()
+        If TimerDiff($pidPollTimer) >= $g_wowPidPollIntervalMs Then
+            $pidPollTimer = TimerInit()
+            CheckWowPidForReload($listview, $pidList, $playernameList)
+        EndIf
         Select
             Case $msg = $login
                 Login()
             Case $msg = $insertPos
-                InsertPos($g_input, $listview, GUICtrlRead($comboBox))
+                InsertPos($g_input, $listview, $g_category_selected)
             Case $msg = $appendPos
-                AppendPos($g_input, $listview, GUICtrlRead($comboBox))
+                AppendPos($g_input, $listview, $g_category_selected)
             Case $msg = $addPos
-                AddPos($g_input, $listview, GUICtrlRead($comboBox))
+                AddPos($g_input, $listview, $g_category_selected)
             Case $msg = $editPos
-                EditPos($g_input, $listview, GUICtrlRead($comboBox))
+                EditPos($g_input, $listview, $g_category_selected)
             Case $msg = $delPos
-                DelPos($listview, GUICtrlRead($comboBox))
+                DelPos($listview, $g_category_selected)
             Case $msg = $save
-                Save($listview, $comboBox)
-                ReloadUI($listview, $comboBox, $pidList, $playernameList)
+                Save($listview)
+                ReloadUI($listview, $pidList, $playernameList)
             Case $msg = $reload
-                ReloadUI($listview, $comboBox, $pidList, $playernameList)
-            Case $msg = $teleport
-                Teleport($listview)
+                ReloadUI($listview, $pidList, $playernameList)
 			Case $msg = $sync
 				SyncTeleport($sync)
 			Case $msg = $step
@@ -347,8 +434,8 @@ Func LaunchUI()
 				SelectSingleWowPid($pidList)
             Case $msg = $speed_swi
                 SwitchSpeed($speed_swi)
-            Case $msg = $comboBox
-                SwitchListview(GUICtrlRead($comboBox))
+            Case $msg = $applyPollInterval
+                If ApplyWowPidPollInterval($pidPollInput) Then $pidPollTimer = TimerInit()
             Case $msg = $home
                 Home()
             Case $msg = $onTop

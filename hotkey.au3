@@ -36,7 +36,7 @@ Func HotKeyProcs()
 	EndSwitch
 	For $i = 0 To $hotkeyRegFromFileConfigArrayLen
 		If $keyPressed = $hotkeyRegFromFileConfigArray[$i][0] Then
-			TeleportInterface($hotkeyRegFromFileConfigArray[$i][2], $hotkeyRegFromFileConfigArray[$i][3], $hotkeyRegFromFileConfigArray[$i][4])
+			TeleportInterface($hotkeyRegFromFileConfigArray[$i][2], $hotkeyRegFromFileConfigArray[$i][3], $hotkeyRegFromFileConfigArray[$i][4], "", $hotkeyRegFromFileConfigArray[$i][1])
 			Return
 		EndIf
 	Next

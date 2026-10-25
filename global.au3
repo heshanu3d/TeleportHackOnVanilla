@@ -8,8 +8,13 @@ Global $g_listview
 Global $g_categoryGrid = 0
 Global $g_categoryGroupRows[5]
 Global $g_categoryTab = 0
-Global $g_categoryComboBox = 0
+Global $g_categoryLabel = 0
 Global $g_pendingCategory = ""
+Global $g_recentListview = 0
+Global $g_pendingRecentTeleport = -1
+Global Const $g_recentTeleportLimit = 20
+Global $g_recentTeleportCount = 0
+Global $g_recentTeleports[$g_recentTeleportLimit][5]
 Global $g_input
 Global $g_speed
 Global $g_telelist_split_str = "#"
@@ -21,6 +26,8 @@ Global $g_teleList_whole[0]
 Global $g_lineCount
 Global $g_wowPidList = []
 Global $g_selectPid
+Global $g_wowPidPollIntervalMs = 30000
+Global $g_wowPidPollSettingsPath = @ScriptDir & "\teleport_ui.ini"
 Global $g_hwnd
 Global $g_syncTeleport = False
 Global $g_step = False

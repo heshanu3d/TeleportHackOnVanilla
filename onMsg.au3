@@ -31,7 +31,7 @@ Func Login()
 
 EndFunc
 
-Func TeleportInterface($x, $y, $z, $r = "")
+Func TeleportInterface($x, $y, $z, $r = "", $label = "")
 	; x,y convert should be done here
 	If $g_syncTeleport = True And $g_step = True Then
 		print("cannot select sync-tp step-tp at same time. As operate differect client step-tp is not possible at moment")
@@ -55,6 +55,7 @@ Func TeleportInterface($x, $y, $z, $r = "")
 			Sleep(30)
 		EndIf
 	EndIf
+	RecordRecentTeleport($x, $y, $z, $r, $label)
 EndFunc
 
 Func TeleportStepByStep($x, $y, $z)
@@ -122,7 +123,7 @@ Func Teleport($listview)
     $array = StringSplit($text, '|')
     Local $r = ""
     If $array[0] >= 5 Then $r = $array[5]
-    TeleportInterface($array[2], $array[3], $array[4], $r)
+    TeleportInterface($array[2], $array[3], $array[4], $r, $array[1])
 EndFunc
 
 Func AppendPos($input, $listview, $cateText)
@@ -230,36 +231,22 @@ Func SaveFromList(ByRef $telelist, ByRef $pointCnt, $fd)
 	WEnd
 EndFunc
 
-Func Save($listview, $comboBox)
-	$cateText = GUICtrlRead($comboBox)
+Func Save($listview)
     $fd = GetListFd($FO_OVERWRITE + $FO_CREATEPATH)
     If $fd = -1 Then
         print("An error occurred when opening the file.")
+        Return
     EndIf
 
 	Local $pointCnt = 0
 
-	If $cateText = "所有" Then
-		$telelist = Save_telelist($catetext)
+	If $g_category_selected = "所有" Then
+		$telelist = Save_telelist("所有")
 		SaveFromList($telelist, $pointCnt, $fd)
-		;~ Local $i = 0
-		;~ While $i < UBound($telelist)
-		;~ 	Local $telePointText = $telelist[$i]
-		;~ 	For $c = 1 to $columnCount - 1
-		;~ 		$telePointText = $telePointText & $g_telelist_split_str & $telelist[$i+$c]
-		;~ 	Next
-	
-		;~ 	FileWriteLine($fd, $telePointText)
-		;~ 	$pointCnt = $pointCnt + 1
-	
-		;~ 	$i = $i + $columnCount
-		;~ WEnd
 	Else
-		$list = _GUICtrlComboBox_GetListArray($comboBox)
-		;~ $list[0] is value of UBound($list)-1
-		For $i = 2 to $list[0]
-			;~ print("save " & $i & " " & $list[$i])
-			$telelist = Save_telelist($list[$i])
+		Local $categories = GetAllCategoryNames()
+		For $i = 0 To UBound($categories) - 1
+			$telelist = Save_telelist($categories[$i])
 			SaveFromList($telelist, $pointCnt, $fd)
 		Next
 	EndIf
@@ -269,7 +256,7 @@ Func Save($listview, $comboBox)
 	FileClose($fd)
 EndFunc
 
-Func ReloadUI($listview, $comboBox, ByRef $list, ByRef $playernameList)
+Func ReloadUI($listview, ByRef $list, ByRef $playernameList)
     Local $tReload = TimerInit()
 
     Local $t1 = TimerInit()
@@ -277,9 +264,10 @@ Func ReloadUI($listview, $comboBox, ByRef $list, ByRef $playernameList)
     Local $tTeleport = TimerDiff($t1)
 
     Local $t2 = TimerInit()
-    InitComboBox($category, $comboBox)
+    If $g_category_selected <> "所有" And Not $g_teleListDict.Exists($g_category_selected) Then $g_category_selected = "所有"
+    If $g_categoryLabel <> 0 Then GUICtrlSetData($g_categoryLabel, "当前：" & $g_category_selected)
     RefreshCategoryGrid($category)
-    Local $tCombo = TimerDiff($t2)
+    Local $tCategoryGrid = TimerDiff($t2)
 
     Local $t3 = TimerInit()
     $g_listview = InitListview($listview)
@@ -292,7 +280,7 @@ Func ReloadUI($listview, $comboBox, ByRef $list, ByRef $playernameList)
     Local $tTotal = TimerDiff($tReload)
     print("[PERF] ====== ReloadUI ======")
     print("[PERF] InitTeleportList: " & Round($tTeleport, 1) & "ms")
-    print("[PERF] InitComboBox:     " & Round($tCombo, 1) & "ms")
+    print("[PERF] CategoryGrid:     " & Round($tCategoryGrid, 1) & "ms")
     print("[PERF] InitListview:     " & Round($tListview, 1) & "ms")
     print("[PERF] InitPidList:      " & Round($tPid, 1) & "ms")
     print("[PERF] ReloadUI Total:   " & Round($tTotal, 1) & "ms")
@@ -336,6 +324,7 @@ Func Home()
 			return
 		EndIf
 		WritePositionSingle($y, $x, $z, $g_singleWowProcess)
+		RecordRecentTeleport($x, $y, $z, "", "home")
 	EndIf
 EndFunc
 
@@ -386,11 +375,15 @@ EndFunc
 
 Func SelectSingleWowPid($pidList)
 	If $g_syncTeleport = False Then
+		Local $selectedIndex = _GUICtrlListBox_GetCurSel($pidList)
+		If $selectedIndex < 0 Then Return
+		Local $pid = Number(_GUICtrlListBox_GetText($pidList, $selectedIndex))
+		If $pid <= 0 Then Return
 		_MemoryClose($g_singleWowProcess)
-		$g_selectPid = _GUICtrlListBox_GetText($pidList, _GUICtrlListBox_GetCaretIndex($pidList))
+		$g_selectPid = $pid
 		$g_hwnd = _WinGetHandleByPidAndCls($g_selectPid, "GxWindowClassD3d")
 		$g_singleWowProcess = _MemoryOpen($g_selectPid)
-		print("select pid: " & _GUICtrlListBox_GetText($pidList, _GUICtrlListBox_GetCaretIndex($pidList)))
+		print("select pid: " & $g_selectPid)
 	Else
 		print("syncTeleport Checkbox is on , specify single wow pid will not work")
 	EndIf

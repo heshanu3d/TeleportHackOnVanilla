@@ -7,6 +7,11 @@ root (`main*.au3`, `hack.au3`, ...). A modern, cross-platform Python /
 PySide6 port lives in [`win/`](win/) and ships with full unit tests and
 documentation.
 
+The AutoIt **设置** tab controls the WoW PID polling interval (1–3600 seconds,
+default 30). Applying a new value saves it in `teleport_ui.ini` beside the
+script/executable and restarts the polling timer. The **关于** tab lists the
+author and release notes for each tag.
+
 ## Quick start (Windows)
 
 Three batch files at the repository root cover the common workflows.
