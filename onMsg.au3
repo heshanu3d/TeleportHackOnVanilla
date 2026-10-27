@@ -37,10 +37,6 @@ Func CanTeleportToMap($map)
 		print("Invalid destination map ID; teleport cancelled")
 		Return False
 	EndIf
-	If $version = "1.12.1" And $MapID = 0 Then
-		print("1.12.1 map verification is unavailable")
-		Return True
-	EndIf
 	If $g_syncTeleport Then
 		Local $processCount = UBound($g_wowPidList) - 1
 		If $processCount <= 0 Or $processCount > UBound($g_wowProcess) Then Return False

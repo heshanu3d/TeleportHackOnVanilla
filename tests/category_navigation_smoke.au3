@@ -205,11 +205,45 @@ $g_wowProcess[1][1] = 0
 If CanTeleportToMap(0) Then Fail("sync map validation accepted unreadable process")
 $g_syncTeleport = False
 $g_wowPidList = $originalWowPidList
-$MapID = 0
 $version = "1.12.1"
-If Not CanTeleportToMap(230) Then Fail("1.12.1 map fallback blocked existing teleport")
+If ReadMapForProcess($g_singleWowProcess) <> 0 Or Not CanTeleportToMap(0) Or CanTeleportToMap(230) Then Fail("1.12.1 map 0 validation failed")
+DllStructSetData($testMapValue, 1, 230)
+If ReadMapForProcess($g_singleWowProcess) <> 230 Or Not CanTeleportToMap(230) Or CanTeleportToMap(0) Then Fail("1.12.1 map 230 validation failed")
+$MapID = 0
+If CanTeleportToMap(230) Then Fail("1.12.1 accepted unavailable map")
 $version = "1.12.3"
 $MapID = $originalMapIdAddress
+Local $originalStaticPlayer = $StaticPlayer
+Local $originalXOffsets = $DstXOffsetArray, $originalYOffsets = $DstYOffsetArray, $originalZOffsets = $DstZOffsetArray
+Local $testNodes[5], $testPosition = DllStructCreate("float[4]")
+For $i = 0 To 4
+    $testNodes[$i] = DllStructCreate("ptr")
+    $DstXOffsetArray[$i] = 0
+    $DstYOffsetArray[$i] = 0
+    $DstZOffsetArray[$i] = 0
+Next
+For $i = 0 To 3
+    DllStructSetData($testNodes[$i], 1, DllStructGetPtr($testNodes[$i + 1]))
+Next
+DllStructSetData($testNodes[4], 1, DllStructGetPtr($testPosition))
+$StaticPlayer = DllStructGetPtr($testNodes[0])
+$DstYOffsetArray[4] = 4
+$DstZOffsetArray[4] = 8
+Local $testVersions[2] = ["1.12.1", "1.12.3"]
+For $testVersion In $testVersions
+    $version = $testVersion
+    DllStructSetData($testPosition, 1, 1.25, 4)
+    If Abs(ReadFacingVanilla($g_singleWowProcess) - 1.25) > 0.001 Or @error Then Fail("facing read failed: " & $version)
+    If Not WritePositionSingle(10, 20, 30, $g_singleWowProcess, 2.25) Then Fail("facing write failed: " & $version)
+    If Abs(DllStructGetData($testPosition, 1, 4) - 2.25) > 0.001 Then Fail("facing write value incorrect: " & $version)
+    If Not WritePositionSingle(10, 20, 30, $g_singleWowProcess) Then Fail("position write without facing failed: " & $version)
+    If Abs(DllStructGetData($testPosition, 1, 4) - 2.25) > 0.001 Then Fail("empty facing changed orientation: " & $version)
+Next
+$StaticPlayer = $originalStaticPlayer
+$DstXOffsetArray = $originalXOffsets
+$DstYOffsetArray = $originalYOffsets
+$DstZOffsetArray = $originalZOffsets
+$version = "1.12.3"
 _MemoryClose($g_singleWowProcess)
 Local $originalFile = $teleport_file
 $teleport_file = @TempDir & "\teleport_category_navigation_save.fav"

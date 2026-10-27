@@ -46,7 +46,7 @@ Func ReadMap()
     Return ReadMapForProcess($g_singleWowProcess)
 EndFunc
 
-Func ReadFacing1123($wowProcess)
+Func ReadFacingVanilla($wowProcess)
     Local $addr = $StaticPlayer
     For $i = 0 To UBound($DstZOffsetArray) - 1
         Local $ptr = _MemoryRead($addr, $wowProcess, "ptr")
@@ -102,8 +102,8 @@ Func ReadPosition()
         print("CurrPosY : " & $CurrY)
         print("CurrPosZ : " & $CurrZ)
         Local $facing = ""
-        If $version = "1.12.3" Then
-            $facing = ReadFacing1123($g_singleWowProcess)
+        If $version = "1.12.1" Or $version = "1.12.3" Then
+            $facing = ReadFacingVanilla($g_singleWowProcess)
             If Not @error Then $facing = Round($facing, 3)
         EndIf
         Local $map = ReadMap()
@@ -162,7 +162,7 @@ Func WritePositionSingle($x, $y, $z, $wowProcess, $r = "")
         If Not _MemoryWrite($addrX, $wowProcess, $x, 'float') Then Return False
         If Not _MemoryWrite($addrY, $wowProcess, $y, 'float') Then Return False
         If Not _MemoryWrite($addrZ, $wowProcess, $z, 'float') Then Return False
-        If $version = "1.12.3" And StringLen(String($r)) > 0 Then
+        If ($version = "1.12.1" Or $version = "1.12.3") And StringLen(String($r)) > 0 Then
             If Not _MemoryWrite($addrZ + 4, $wowProcess, $r, 'float') Then Return False
         EndIf
 
