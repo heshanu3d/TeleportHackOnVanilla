@@ -14,9 +14,11 @@ author and release notes for each tag.
 
 ## AutoIt builds (Windows)
 
-Run `build.bat` from any working directory. It locates Aut2Exe via
-`AUTOIT_HOME`, the standard AutoIt installation path, or the AutoIt registry
-entry (including installations such as `D:\SDK\AutoIt3`). Git is
+Run `build.bat` from any working directory. The tracked `.build.ini` contains
+`[build]` / `sdk_path=D:\SDK\AutoIt3`; this SDK path takes precedence over
+`AUTOIT_HOME`. If the configuration is absent or its path is empty, the script
+falls back to `AUTOIT_HOME`, the standard AutoIt installation path, or the
+AutoIt registry entry. Git is
 required to read the most recent reachable tag. The output goes to `build\`:
 three `Teleportors-<client>-<version>.exe` files, plus `favlist.fav` and
 `hotkey.txt`. At the tagged commit `0.5.2`, the version is `v0.5.2`. On a

@@ -4,23 +4,39 @@ pushd "%~dp0" || exit /b 1
 
 set "EXITCODE=1"
 set "BUILD_DIR=%CD%\build"
-set "COMPILER=%AUTOIT_HOME%\Aut2Exe\Aut2exe.exe"
-if not defined AUTOIT_HOME set "COMPILER=%ProgramFiles(x86)%\AutoIt3\Aut2Exe\Aut2exe.exe"
-if not exist "!COMPILER!" if not defined AUTOIT_HOME set "COMPILER=%ProgramFiles%\AutoIt3\Aut2Exe\Aut2exe.exe"
-if not exist "!COMPILER!" if not defined AUTOIT_HOME (
-    for /f "tokens=1,2,*" %%A in ('reg query "HKLM\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\AutoItv3" /v UninstallString 2^>nul') do (
-        if /i "%%A"=="UninstallString" for %%I in ("%%C") do set "COMPILER=%%~dpIAut2Exe\Aut2exe.exe"
+set "SDK_DIR="
+if exist ".build.ini" (
+    set "IN_BUILD_SECTION="
+    for /f "usebackq tokens=1,* delims==" %%K in (".build.ini") do (
+        if /i "%%K"=="[build]" set "IN_BUILD_SECTION=1"
+        if defined IN_BUILD_SECTION if /i "%%K"=="sdk_path" set "SDK_DIR=%%L"
     )
 )
-if not exist "!COMPILER!" if not defined AUTOIT_HOME (
-    for /f "tokens=1,2,*" %%A in ('reg query "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\AutoItv3" /v UninstallString 2^>nul') do (
-        if /i "%%A"=="UninstallString" for %%I in ("%%C") do set "COMPILER=%%~dpIAut2Exe\Aut2exe.exe"
+if defined SDK_DIR (
+    set "COMPILER=!SDK_DIR!\Aut2Exe\Aut2exe.exe"
+    if not exist "!COMPILER!" (
+        echo [ERROR] Aut2Exe not found under .build.ini sdk_path: !SDK_DIR!
+        goto :done
     )
-)
-if not exist "!COMPILER!" (
-    echo [ERROR] Aut2Exe not found in Program Files or the AutoIt registry entry.
-    echo Set AUTOIT_HOME to the AutoIt3 installation directory.
-    goto :done
+) else (
+    set "COMPILER=%AUTOIT_HOME%\Aut2Exe\Aut2exe.exe"
+    if not defined AUTOIT_HOME set "COMPILER=%ProgramFiles(x86)%\AutoIt3\Aut2Exe\Aut2exe.exe"
+    if not exist "!COMPILER!" if not defined AUTOIT_HOME set "COMPILER=%ProgramFiles%\AutoIt3\Aut2Exe\Aut2exe.exe"
+    if not exist "!COMPILER!" if not defined AUTOIT_HOME (
+        for /f "tokens=1,2,*" %%A in ('reg query "HKLM\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\AutoItv3" /v UninstallString 2^>nul') do (
+            if /i "%%A"=="UninstallString" for %%I in ("%%C") do set "COMPILER=%%~dpIAut2Exe\Aut2exe.exe"
+        )
+    )
+    if not exist "!COMPILER!" if not defined AUTOIT_HOME (
+        for /f "tokens=1,2,*" %%A in ('reg query "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\AutoItv3" /v UninstallString 2^>nul') do (
+            if /i "%%A"=="UninstallString" for %%I in ("%%C") do set "COMPILER=%%~dpIAut2Exe\Aut2exe.exe"
+        )
+    )
+    if not exist "!COMPILER!" (
+        echo [ERROR] Aut2Exe not found in Program Files or the AutoIt registry entry.
+        echo Set AUTOIT_HOME to the AutoIt3 installation directory.
+        goto :done
+    )
 )
 where git >nul 2>&1
 if errorlevel 1 (
