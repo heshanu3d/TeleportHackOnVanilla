@@ -156,6 +156,7 @@ Func _EditPos_telelist(ByRef $teleList, $selectedLine, $text, $currPosArr)
     $teleList[$columnCount*$selectedLine+2] = $currPosArr[1]
     $teleList[$columnCount*$selectedLine+3] = $currPosArr[2]
     $teleList[$columnCount*$selectedLine+4] = $currPosArr[3]
+    $teleList[$columnCount*$selectedLine+5] = $currPosArr[4]
     ;~ print("after columnCount" & $columnCount & " selectedLine " & $selectedLine)
     ;~ print($teleList[$columnCount*$selectedLine])
     ;~ print($teleList[$columnCount*$selectedLine+1])

@@ -14,7 +14,7 @@ Global $g_recentListview = 0
 Global $g_pendingRecentTeleport = -1
 Global Const $g_recentTeleportLimit = 20
 Global $g_recentTeleportCount = 0
-Global $g_recentTeleports[$g_recentTeleportLimit][5]
+Global $g_recentTeleports[$g_recentTeleportLimit][6]
 Global $g_input
 Global $g_speed
 Global $g_telelist_split_str = "#"
@@ -42,5 +42,5 @@ Global $g_log
 
 
 Global $hotkeyRegFromFileConfigArrayMaxLen = 50
-Global $hotkeyRegFromFileConfigArray[$hotkeyRegFromFileConfigArrayMaxLen][5]
+Global $hotkeyRegFromFileConfigArray[$hotkeyRegFromFileConfigArrayMaxLen][7]
 Global $hotkeyRegFromFileConfigArrayLen = 0

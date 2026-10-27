@@ -110,9 +110,9 @@ Func _MemoryRead($iv_Address, $ah_Handle, $sv_Type = 'dword')
 		Return 0
 	EndIf
 	
-	DllCall($ah_Handle[0], 'int', 'ReadProcessMemory', 'int', $ah_Handle[1], 'int', $iv_Address, 'ptr', DllStructGetPtr($v_Buffer), 'int', DllStructGetSize($v_Buffer), 'int', '')
-	
-	If Not @Error Then
+	Local $a_Read = DllCall($ah_Handle[0], 'int', 'ReadProcessMemory', 'int', $ah_Handle[1], 'int', $iv_Address, 'ptr', DllStructGetPtr($v_Buffer), 'int', DllStructGetSize($v_Buffer), 'int', '')
+	If @Error Then Return SetError(6, 0, 0)
+	If $a_Read[0] <> 0 Then
 		Local $v_Value = DllStructGetData($v_Buffer, 1)
 		Return $v_Value
 	Else
@@ -173,9 +173,9 @@ Func _MemoryWrite($iv_Address, $ah_Handle, $v_Data, $sv_Type = 'dword')
 		EndIf
 	EndIf
 	
-	DllCall($ah_Handle[0], 'int', 'WriteProcessMemory', 'int', $ah_Handle[1], 'int', $iv_Address, 'ptr', DllStructGetPtr($v_Buffer), 'int', DllStructGetSize($v_Buffer), 'int', '')
-	
-	If Not @Error Then
+	Local $a_Write = DllCall($ah_Handle[0], 'int', 'WriteProcessMemory', 'int', $ah_Handle[1], 'int', $iv_Address, 'ptr', DllStructGetPtr($v_Buffer), 'int', DllStructGetSize($v_Buffer), 'int', '')
+	If @Error Then Return SetError(7, 0, 0)
+	If $a_Write[0] <> 0 Then
 		Return 1
 	Else
 		SetError(7)

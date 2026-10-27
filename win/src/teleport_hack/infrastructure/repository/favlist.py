@@ -2,7 +2,7 @@
 
 File format (one teleport per line)::
 
-    描述#x#y#z
+    描述#x#y#z[#facing[#map_id]]
 
 The original AutoIt code also tolerated a 4-line-per-record fallback layout;
 we preserve that on read but always emit the canonical single-line format on
@@ -47,10 +47,12 @@ class FavlistRepository:
         while i < n:
             line = lines[i]
             parts = line.split(self._sep)
-            if len(parts) == COLUMN_COUNT:
-                desc, x, y, z = parts
+            if COLUMN_COUNT <= len(parts) <= 6:
+                desc, x, y, z = parts[:4]
                 try:
-                    yield TeleportPoint(desc, Position.from_strings(x, y, z))
+                    facing = float(parts[4]) if len(parts) > 4 and parts[4] else None
+                    map_id = int(parts[5]) if len(parts) > 5 and parts[5] else None
+                    yield TeleportPoint(desc, Position.from_strings(x, y, z), facing, map_id)
                 except ValueError:
                     # Malformed line, skip silently like the AutoIt original.
                     pass

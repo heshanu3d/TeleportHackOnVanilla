@@ -31,17 +31,31 @@ Func InitMemory()
     print("--------------------------------------------------------")
 EndFunc
 
+Func ReadMapForProcess($wowProcess)
+    If $MapID = 0 Then Return -1
+    Local $map = _MemoryRead($MapID, $wowProcess, "dword")
+    If @error Then Return -1
+    Return $map
+EndFunc
+
 Func ReadMap()
-    If $g_syncTeleport = False Then
-        If $version = "3.3.5" Then
-            return _MemoryRead($MapID, $g_singleWowProcess, "dword")
-        Else
-            return -1
-        EndIf
-    Else
+    If $g_syncTeleport Then
         print("multi readmap is not support")
         return -1
     EndIf
+    Return ReadMapForProcess($g_singleWowProcess)
+EndFunc
+
+Func ReadFacing1123($wowProcess)
+    Local $addr = $StaticPlayer
+    For $i = 0 To UBound($DstZOffsetArray) - 1
+        Local $ptr = _MemoryRead($addr, $wowProcess, "ptr")
+        If @error Or $ptr = 0 Then Return SetError(1, 0, "")
+        $addr = $ptr + $DstZOffsetArray[$i]
+    Next
+    Local $facing = _MemoryRead($addr + 4, $wowProcess, "float")
+    If @error Then Return SetError(1, 0, "")
+    Return $facing
 EndFunc
 
 Func ReadPosition()
@@ -51,36 +65,53 @@ Func ReadPosition()
     EndIf
     If $version = "3.3.5" Then
         Local $PB1 = _MemoryRead($StaticPlayer, $g_singleWowProcess, "Ptr")
+        If @error Or $PB1 = 0 Then Return SetError(1, 0, 0)
         Local $PB2 = _MemoryRead($PB1 + $PbPointer1, $g_singleWowProcess, "Ptr")
+        If @error Or $PB2 = 0 Then Return SetError(1, 0, 0)
         Local $PlayerBase = _MemoryRead($PB2 + $PbPointer2, $g_singleWowProcess, "Ptr")
+        If @error Or $PlayerBase = 0 Then Return SetError(1, 0, 0)
         ;~ $MapId = Round(_MemoryRead($MapID, $g_singleWowProcess, "dword"))
-        $CurrX = Round(_MemoryRead($PlayerBase + $PosX, $g_singleWowProcess, "float"), 3)
-        $CurrY = Round(_MemoryRead($PlayerBase + $PosY, $g_singleWowProcess, "float"), 3)
-        $CurrZ = Round(_MemoryRead($PlayerBase + $PosZ, $g_singleWowProcess, "float"), 3)
-        $CurrR = Round(_MemoryRead($PlayerBase + $PosR, $g_singleWowProcess, "float"), 3)
+        $CurrX = _MemoryRead($PlayerBase + $PosX, $g_singleWowProcess, "float")
+        If @error Then Return SetError(1, 0, 0)
+        $CurrY = _MemoryRead($PlayerBase + $PosY, $g_singleWowProcess, "float")
+        If @error Then Return SetError(1, 0, 0)
+        $CurrZ = _MemoryRead($PlayerBase + $PosZ, $g_singleWowProcess, "float")
+        If @error Then Return SetError(1, 0, 0)
+        $CurrR = _MemoryRead($PlayerBase + $PosR, $g_singleWowProcess, "float")
+        If @error Then Return SetError(1, 0, 0)
+        $CurrR = Round($CurrR, 3)
         print("CurrPosX : " & $CurrX)
         print("CurrPosY : " & $CurrY)
         print("CurrPosZ : " & $CurrZ)
         print("CurrPosR : " & $CurrR)
-        ;~ 朝向 r (orientation)：3.3.5 才读取，1.12.x 在下面 Else 分支留空
-        Local $posArr[4] = [Round($CurrX, 3), Round($CurrY, 3), Round($CurrZ, 3), $CurrR]
+        Local $map = ReadMap()
+        If $map < 0 Then $map = ""
+        Local $posArr[5] = [Round($CurrX, 3), Round($CurrY, 3), Round($CurrZ, 3), $CurrR, $map]
         return $posArr
     Else
         $CurrX = _MemoryRead($CurrPosX, $g_singleWowProcess, "float")
+        If @error Then Return SetError(1, 0, 0)
         $CurrY = _MemoryRead($CurrPosY, $g_singleWowProcess, "float")
+        If @error Then Return SetError(1, 0, 0)
         $CurrZ = _MemoryRead($CurrPosZ, $g_singleWowProcess, "float")
+        If @error Then Return SetError(1, 0, 0)
         ;print("PointPosX : " & Hex($CurrPosX))
         ;print("PointPosY : " & Hex($CurrPosY))
         ;print("PointPosZ : " & Hex($CurrPosZ))
         print("CurrPosX : " & $CurrX)
         print("CurrPosY : " & $CurrY)
         print("CurrPosZ : " & $CurrZ)
-        ;~ $R=_MemoryRead($Adr+$PosR,$g_singleWowProcess,"float")
-        ;~ 1.12.x 没有朝向偏移，r 留空（不读取、不写入），3.3.5 才生效
+        Local $facing = ""
+        If $version = "1.12.3" Then
+            $facing = ReadFacing1123($g_singleWowProcess)
+            If Not @error Then $facing = Round($facing, 3)
+        EndIf
+        Local $map = ReadMap()
+        If $map < 0 Then $map = ""
         If $version = "1.12.1" Then
-            Local $posArr[4] = [Round($CurrY, 3), Round($CurrX, 3), Round($CurrZ, 3), ""]
+            Local $posArr[5] = [Round($CurrY, 3), Round($CurrX, 3), Round($CurrZ, 3), $facing, $map]
         Else
-            Local $posArr[4] = [Round($CurrX, 3), Round($CurrY, 3), Round($CurrZ, 3), ""]
+            Local $posArr[5] = [Round($CurrX, 3), Round($CurrY, 3), Round($CurrZ, 3), $facing, $map]
         EndIf
         return $posArr
     EndIf
@@ -89,15 +120,18 @@ EndFunc
 Func WritePositionSingle($x, $y, $z, $wowProcess, $r = "")
     If $version = "3.3.5" Then
         Local $PB1 = _MemoryRead($StaticPlayer, $WowProcess, "Ptr")
+        If @error Or $PB1 = 0 Then Return False
         Local $PB2 = _MemoryRead($PB1 + $PbPointer1, $WowProcess, "Ptr")
+        If @error Or $PB2 = 0 Then Return False
         Local $PlayerBase = _MemoryRead($PB2 + $PbPointer2, $WowProcess, "Ptr")
+        If @error Or $PlayerBase = 0 Then Return False
         ;~ $PlayerBase2 = _MemoryRead($PlayerBase + 8, $WowProcess,"Ptr")
-        _MemoryWrite($PlayerBase + $PosX, $WowProcess, $y, "float")
-        _MemoryWrite($PlayerBase + $PosY, $WowProcess, $x, "float")
-        _MemoryWrite($PlayerBase + $PosZ, $WowProcess, $z, "float")
-        ;~ 朝向 r (orientation)：仅 3.3.5 写入。r 为空字符串时保持原朝向不变
-        If $r <> "" Then
-            _MemoryWrite($PlayerBase + $PosR, $WowProcess, $r, "float")
+        If Not _MemoryWrite($PlayerBase + $PosX, $WowProcess, $y, "float") Then Return False
+        If Not _MemoryWrite($PlayerBase + $PosY, $WowProcess, $x, "float") Then Return False
+        If Not _MemoryWrite($PlayerBase + $PosZ, $WowProcess, $z, "float") Then Return False
+        ; An empty facing leaves the current orientation unchanged.
+        If StringLen(String($r)) > 0 Then
+            If Not _MemoryWrite($PlayerBase + $PosR, $WowProcess, $r, "float") Then Return False
         EndIf
     Else
         Local $addrX = $StaticPlayer
@@ -111,35 +145,48 @@ Func WritePositionSingle($x, $y, $z, $wowProcess, $r = "")
         for $i = 0 to UBound($DstYOffsetArray) - 1
             ;~ print("loop : " & $i)
             ;~ print("$offset : " & $DstYOffsetArray[$i])
-            $addrX = _MemoryRead($addrX, $wowProcess) + $DstXOffsetArray[$i]
-            $addrY = _MemoryRead($addrY, $wowProcess) + $DstYOffsetArray[$i]
-            $addrZ = _MemoryRead($addrZ, $wowProcess) + $DstZOffsetArray[$i]
+            Local $ptrX = _MemoryRead($addrX, $wowProcess)
+            If @error Or $ptrX = 0 Then Return False
+            Local $ptrY = _MemoryRead($addrY, $wowProcess)
+            If @error Or $ptrY = 0 Then Return False
+            Local $ptrZ = _MemoryRead($addrZ, $wowProcess)
+            If @error Or $ptrZ = 0 Then Return False
+            $addrX = $ptrX + $DstXOffsetArray[$i]
+            $addrY = $ptrY + $DstYOffsetArray[$i]
+            $addrZ = $ptrZ + $DstZOffsetArray[$i]
             ;~ print("$addrX : " & $addrX)
             ;~ print("$addrY : " & $addrY)
             ;~ print("$addrZ : " & $addrZ)
         Next
 
-        _MemoryWrite($addrX, $wowProcess, $x, 'float')
-        _MemoryWrite($addrY, $wowProcess, $y, 'float')
-        _MemoryWrite($addrZ, $wowProcess, $z, 'float')
+        If Not _MemoryWrite($addrX, $wowProcess, $x, 'float') Then Return False
+        If Not _MemoryWrite($addrY, $wowProcess, $y, 'float') Then Return False
+        If Not _MemoryWrite($addrZ, $wowProcess, $z, 'float') Then Return False
+        If $version = "1.12.3" And StringLen(String($r)) > 0 Then
+            If Not _MemoryWrite($addrZ + 4, $wowProcess, $r, 'float') Then Return False
+        EndIf
 
         ; print("teleporting")
         ; print("x : " & $x)
         ; print("y : " & $y)
         ; print("z : " & $z)
     EndIf
+    Return True
 EndFunc
 
 Func WritePosition($x, $y, $z, $r = "")
     If $g_syncTeleport = False Then
-        WritePositionSingle($x, $y, $z, $g_singleWowProcess, $r)
+        Return WritePositionSingle($x, $y, $z, $g_singleWowProcess, $r)
     Else
-        print("multi-teleport, num:" & (UBound($g_wowProcess)-1)/2)
-        For $i = 0 to (UBound($g_wowProcess)-1)/2 - 1
+        Local $processCount = UBound($g_wowPidList) - 1
+        If $processCount <= 0 Or $processCount > UBound($g_wowProcess) Then Return False
+        print("multi-teleport, num:" & $processCount)
+        For $i = 0 To $processCount - 1
             Local $tmp[2] = [$g_wowProcess[$i][0]]
             $tmp[1] = $g_wowProcess[$i][1]
-            WritePositionSingle($x, $y, $z, $tmp, $r)
+            If Not WritePositionSingle($x, $y, $z, $tmp, $r) Then Return False
         Next
+        Return True
     EndIf
 EndFunc
 

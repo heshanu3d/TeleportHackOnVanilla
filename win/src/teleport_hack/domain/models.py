@@ -41,6 +41,8 @@ class TeleportPoint:
 
     description: str
     position: Position
+    facing: float | None = None
+    map_id: int | None = None
 
     @property
     def category(self) -> str:
@@ -52,13 +54,18 @@ class TeleportPoint:
         head, sep, _ = self.description.partition("-")
         return head if sep else OTHER_CATEGORY
 
-    def to_serialized_fields(self) -> tuple[str, str, str, str]:
-        return (
+    def to_serialized_fields(self) -> tuple[str, ...]:
+        fields = (
             self.description,
             _format_float(self.position.x),
             _format_float(self.position.y),
             _format_float(self.position.z),
         )
+        if self.facing is not None or self.map_id is not None:
+            fields += ("" if self.facing is None else _format_float(self.facing),)
+        if self.map_id is not None:
+            fields += (str(self.map_id),)
+        return fields
 
 
 def _format_float(value: float) -> str:

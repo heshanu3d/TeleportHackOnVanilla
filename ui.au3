@@ -95,7 +95,7 @@ Func InitTeleportList()
     Local $bFileError = @error
     Local $tFileRead = TimerDiff($tTotal)
     print("$g_lineCount : " & $g_lineCount)
-    $columnCount = 5
+    $columnCount = 6
 
     If $bFileError Then
         MsgBox($MB_SYSTEMMODAL, "", "There was an error reading the file. @error: " & $bFileError)
@@ -118,10 +118,7 @@ Func InitTeleportList()
         Local $split = StringSplit($text, $g_telelist_split_str)
 
         Local $fieldCount = $split[0]
-        If $fieldCount = $columnCount Or $fieldCount = $columnCount - 1 Then
-            ; # 格式：一行包含 desc#x#y#z[#r]
-            ; 5 字段为新格式(含朝向 r)，4 字段为旧格式(无朝向，补空 r 以保持 stride 一致)
-            Local $bPadR = ($fieldCount < $columnCount)
+        If $fieldCount >= 4 And $fieldCount <= $columnCount Then
             ; 提取分类名（取描述字段中"-"前面的部分）
             Local $cateText = $split[1]
             Local $dashSplit = StringSplit($cateText, "-")
@@ -131,7 +128,9 @@ Func InitTeleportList()
             For $j = 1 To $fieldCount
                 $allList.Add($split[$j])
             Next
-            If $bPadR Then $allList.Add("")
+            For $j = $fieldCount + 1 To $columnCount
+                $allList.Add("")
+            Next
 
             ; 加入对应分类列表
             If Not $catDict.Exists($cateText) Then
@@ -142,12 +141,16 @@ Func InitTeleportList()
             For $j = 1 To $fieldCount
                 $catList.Add($split[$j])
             Next
-            If $bPadR Then $catList.Add("")
+            For $j = $fieldCount + 1 To $columnCount
+                $catList.Add("")
+            Next
 
             $i = $i + 1
         Else
-            ; 多行格式：每条记录占 columnCount 行
-            If $i + $columnCount - 1 >= $g_lineCount Then ExitLoop
+            ; Legacy records contain description and three coordinates, optionally followed by facing.
+            If $i + 3 >= $g_lineCount Then ExitLoop
+            Local $legacyCount = 4
+            If $i + 4 < $g_lineCount And StringRegExp(StringStripWS($teleList_whole[$i + 4], 3), "^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?$") Then $legacyCount = 5
 
             Local $cateText = $text
             Local $dashSplit = StringSplit($cateText, "-")
@@ -155,8 +158,11 @@ Func InitTeleportList()
 
             ; 加入 "所有" 列表（每个字段单独存储，保持 stride=4 的一致性）
             $allList.Add($text)
-            For $c = 1 To $columnCount - 1
+            For $c = 1 To $legacyCount - 1
                 $allList.Add($teleList_whole[$i + $c])
+            Next
+            For $c = $legacyCount To $columnCount - 1
+                $allList.Add("")
             Next
 
             ; 加入对应分类列表
@@ -166,11 +172,14 @@ Func InitTeleportList()
             EndIf
             Local $catList = $catDict.Item($cateText)
             $catList.Add($text)
-            For $c = 1 To $columnCount - 1
+            For $c = 1 To $legacyCount - 1
                 $catList.Add($teleList_whole[$i + $c])
             Next
+            For $c = $legacyCount To $columnCount - 1
+                $catList.Add("")
+            Next
 
-            $i = $i + $columnCount
+            $i = $i + $legacyCount
         EndIf
     WEnd
     Local $tParseMs = TimerDiff($tParse)
@@ -195,12 +204,13 @@ Func InitListview($listview = 0)
     If $listview = 0 Then
         print("launch ui")
         ;~ refactor
-        $listview = GUICtrlCreateListView("        描述        |      x      |      y      |      z      |      r      ", 10, 35, 380, 400)
+        $listview = GUICtrlCreateListView("        描述        |      x      |      y      |      z      |      r      |mapid", 10, 35, 380, 400)
         GUICtrlSendMsg($listview, $LVM_SETCOLUMNWIDTH, 0, 175)
         GUICtrlSendMsg($listview, $LVM_SETCOLUMNWIDTH, 1, 58)
         GUICtrlSendMsg($listview, $LVM_SETCOLUMNWIDTH, 2, 58)
         GUICtrlSendMsg($listview, $LVM_SETCOLUMNWIDTH, 3, 52)
         GUICtrlSendMsg($listview, $LVM_SETCOLUMNWIDTH, 4, 37)
+        GUICtrlSendMsg($listview, $LVM_SETCOLUMNWIDTH, 5, 55)
         $g_listview = $listview
     Else
         ;~ refactor
@@ -269,11 +279,11 @@ Func RefreshRecentTeleportList()
     _GUICtrlListView_EndUpdate($g_recentListview)
 EndFunc
 
-Func RecordRecentTeleport($x, $y, $z, $r = "", $label = "")
+Func RecordRecentTeleport($x, $y, $z, $r = "", $label = "", $map = "")
     If $label = "" Then $label = "坐标点"
     Local $existing = -1
     For $i = 0 To $g_recentTeleportCount - 1
-        If String($g_recentTeleports[$i][1]) = String($x) And String($g_recentTeleports[$i][2]) = String($y) And String($g_recentTeleports[$i][3]) = String($z) Then
+        If String($g_recentTeleports[$i][1]) = String($x) And String($g_recentTeleports[$i][2]) = String($y) And String($g_recentTeleports[$i][3]) = String($z) And String($g_recentTeleports[$i][5]) = String($map) Then
             $existing = $i
             ExitLoop
         EndIf
@@ -283,7 +293,7 @@ Func RecordRecentTeleport($x, $y, $z, $r = "", $label = "")
         $existing = $g_recentTeleportCount - 1
     EndIf
     For $i = $existing To 1 Step -1
-        For $column = 0 To 4
+        For $column = 0 To 5
             $g_recentTeleports[$i][$column] = $g_recentTeleports[$i - 1][$column]
         Next
     Next
@@ -292,6 +302,7 @@ Func RecordRecentTeleport($x, $y, $z, $r = "", $label = "")
     $g_recentTeleports[0][2] = $y
     $g_recentTeleports[0][3] = $z
     $g_recentTeleports[0][4] = $r
+    $g_recentTeleports[0][5] = $map
     RefreshRecentTeleportList()
 EndFunc
 
@@ -299,7 +310,7 @@ Func ApplyPendingRecentTeleport()
     Local $row = $g_pendingRecentTeleport
     $g_pendingRecentTeleport = -1
     If $row < 0 Or $row >= $g_recentTeleportCount Then Return
-    TeleportInterface($g_recentTeleports[$row][1], $g_recentTeleports[$row][2], $g_recentTeleports[$row][3], $g_recentTeleports[$row][4], $g_recentTeleports[$row][0])
+    TeleportInterface($g_recentTeleports[$row][1], $g_recentTeleports[$row][2], $g_recentTeleports[$row][3], $g_recentTeleports[$row][4], $g_recentTeleports[$row][0], $g_recentTeleports[$row][5])
 EndFunc
 
 Func ApplyPendingCategory()

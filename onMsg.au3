@@ -31,20 +31,56 @@ Func Login()
 
 EndFunc
 
-Func TeleportInterface($x, $y, $z, $r = "", $label = "")
+Func CanTeleportToMap($map)
+	If StringLen(String($map)) = 0 Then Return True
+	If Not StringIsInt(String($map)) Or Number($map) < 0 Then
+		print("Invalid destination map ID; teleport cancelled")
+		Return False
+	EndIf
+	If $version = "1.12.1" And $MapID = 0 Then
+		print("1.12.1 map verification is unavailable")
+		Return True
+	EndIf
+	If $g_syncTeleport Then
+		Local $processCount = UBound($g_wowPidList) - 1
+		If $processCount <= 0 Or $processCount > UBound($g_wowProcess) Then Return False
+		For $i = 0 To $processCount - 1
+			Local $process[2] = [$g_wowProcess[$i][0], $g_wowProcess[$i][1]]
+			Local $currentMap = ReadMapForProcess($process)
+			If $currentMap < 0 Or Number($map) <> $currentMap Then
+				print("Cannot teleport to map " & $map & "; process " & $g_wowPidList[$i + 1] & " is on map " & $currentMap)
+				Return False
+			EndIf
+		Next
+	Else
+		Local $currentMap = ReadMapForProcess($g_singleWowProcess)
+		If $currentMap < 0 Then
+			print("Cannot verify destination map; teleport cancelled")
+			Return False
+		EndIf
+		If Number($map) <> $currentMap Then
+			print("Cross-map teleport is not supported: " & $currentMap & " -> " & $map)
+			Return False
+		EndIf
+	EndIf
+	Return True
+EndFunc
+
+Func TeleportInterface($x, $y, $z, $r = "", $label = "", $map = "")
+	If Not CanTeleportToMap($map) Then Return False
 	; x,y convert should be done here
 	If $g_syncTeleport = True And $g_step = True Then
 		print("cannot select sync-tp step-tp at same time. As operate differect client step-tp is not possible at moment")
 		Return
 	EndIf
 	If $g_step = True Then
-		TeleportStepByStep($x, $y, $z)
+		If Not TeleportStepByStep($x, $y, $z, $r) Then Return False
 	Else
 		If $version = "3.3.5" or $version = "1.12.1" Then
-			WritePosition($y, $x, $z, $r)
+			If Not WritePosition($y, $x, $z, $r) Then Return False
 		ElseIf $version = "1.12.3" Then
 			;~ WritePosition($x, $y, $z)
-			WritePosition($y, $x, $z, $r)
+			If Not WritePosition($y, $x, $z, $r) Then Return False
 		EndIf
 		Sleep(40)
 		;Send("{Left}")
@@ -55,11 +91,13 @@ Func TeleportInterface($x, $y, $z, $r = "", $label = "")
 			Sleep(30)
 		EndIf
 	EndIf
-	RecordRecentTeleport($x, $y, $z, $r, $label)
+	RecordRecentTeleport($x, $y, $z, $r, $label, $map)
+	Return True
 EndFunc
 
-Func TeleportStepByStep($x, $y, $z)
+Func TeleportStepByStep($x, $y, $z, $r = "")
 	$currPosArr = ReadPosition()
+	If Not IsArray($currPosArr) Then Return False
 	Local $dstArray[3] = [$x, $y, $z]   ; 闪金镇
 	print("$dstArray[0] : " & $dstArray[0])
 	print("$dstArray[1] : " & $dstArray[1])
@@ -95,7 +133,11 @@ Func TeleportStepByStep($x, $y, $z)
 		$dst[0] = $dst[0] + $normalizedDirection[0]
 		$dst[1] = $dst[1] + $normalizedDirection[1]
 		$dst[2] = $dst[2] + $normalizedDirection[2]
-		WritePosition($dst[1], $dst[0], $dst[2])
+		If $i = $step Then
+			If Not WritePosition($dst[1], $dst[0], $dst[2], $r) Then Return False
+		Else
+			If Not WritePosition($dst[1], $dst[0], $dst[2]) Then Return False
+		EndIf
 		Sleep(40)
 		;Send("{Left}")
 		ControlSend ( $g_hwnd, "", "", "{Left}")
@@ -108,6 +150,7 @@ Func TeleportStepByStep($x, $y, $z)
 		; print("$dst[1] : " & $dst[1])
 		; print("$dst[2] : " & $dst[2])
 	Next
+	Return True
 	;WritePosition($dstArray[1], $dstArray[0], $dstArray[2])
 EndFunc
 
@@ -123,11 +166,14 @@ Func Teleport($listview)
     $array = StringSplit($text, '|')
     Local $r = ""
     If $array[0] >= 5 Then $r = $array[5]
-    TeleportInterface($array[2], $array[3], $array[4], $r, $array[1])
+    Local $map = ""
+    If $array[0] >= 6 Then $map = $array[6]
+    TeleportInterface($array[2], $array[3], $array[4], $r, $array[1], $map)
 EndFunc
 
 Func AppendPos($input, $listview, $cateText)
 	$currPosArr = ReadPosition()
+	If Not IsArray($currPosArr) Then Return
 	$text = GUICtrlRead($input)
 	$selectedLine = _GUICtrlListView_GetSelectedIndices($listview)
 	;~ print($text)
@@ -141,6 +187,7 @@ EndFunc
 
 Func InsertPos($input, $listview, $cateText)
     $currPosArr = ReadPosition()
+    If Not IsArray($currPosArr) Then Return
     $text = GUICtrlRead($input)
 	$selectedLine = _GUICtrlListView_GetSelectedIndices($listview)
     ;~ print($text)
@@ -154,8 +201,9 @@ EndFunc
 
 Func AddPos($input, $listview, $cateText)
     $currPosArr = ReadPosition()
+    If Not IsArray($currPosArr) Then Return
     Local $desc = GUICtrlRead($input)
-    $text = $desc &"|"& $currPosArr[0] &"|"& $currPosArr[1] &"|"& $currPosArr[2] &"|"& $currPosArr[3]
+    $text = $desc &"|"& $currPosArr[0] &"|"& $currPosArr[1] &"|"& $currPosArr[2] &"|"& $currPosArr[3] &"|"& $currPosArr[4]
     ;~ print($text)
     GUICtrlCreateListViewItem($text, $listview)
 	;~ AddPos_telelist($cateText, $desc, $currPosArr)
@@ -164,6 +212,7 @@ EndFunc
 
 Func EditPos($input, $listview, $cateText)
     $currPosArr = ReadPosition()
+    If Not IsArray($currPosArr) Then Return
     $text = GUICtrlRead($input)
     $selectedLine = _GUICtrlListView_GetSelectedIndices($listview)
     _GUICtrlListView_SetItem($listview, $text, $selectedLine)
@@ -171,6 +220,7 @@ Func EditPos($input, $listview, $cateText)
     _GUICtrlListView_SetItem($listview, $currPosArr[1], $selectedLine, 2)
     _GUICtrlListView_SetItem($listview, $currPosArr[2], $selectedLine, 3)
     _GUICtrlListView_SetItem($listview, $currPosArr[3], $selectedLine, 4)
+    _GUICtrlListView_SetItem($listview, $currPosArr[4], $selectedLine, 5)
 	;~ EditPos_telelist($cateText, $selectedLine, $text, $currPosArr)
 	EditPos_telelist($cateText, $selectedLine, $text, $currPosArr)
 EndFunc

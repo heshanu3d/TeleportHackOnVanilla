@@ -187,13 +187,62 @@ $g_selectPid = 0
 SelectOnlyWowPid($singlePid, $singleName)
 If $g_selectPid <> @AutoItPID Then Fail("sync mode did not remember sole PID")
 $g_syncTeleport = False
+Local $originalMapIdAddress = $MapID
+Local $originalWowPidList = $g_wowPidList
+Local $testMapValue = DllStructCreate("dword")
+DllStructSetData($testMapValue, 1, 0)
+$MapID = DllStructGetPtr($testMapValue)
+If Not CanTeleportToMap(0) Or CanTeleportToMap(230) Then Fail("single process map validation failed")
+Local $testPids[3] = [0, @AutoItPID, @AutoItPID]
+$g_wowPidList = $testPids
+$g_wowProcess[0][0] = $g_singleWowProcess[0]
+$g_wowProcess[0][1] = $g_singleWowProcess[1]
+$g_wowProcess[1][0] = $g_singleWowProcess[0]
+$g_wowProcess[1][1] = $g_singleWowProcess[1]
+$g_syncTeleport = True
+If Not CanTeleportToMap(0) Or CanTeleportToMap(230) Then Fail("sync map validation failed")
+$g_wowProcess[1][1] = 0
+If CanTeleportToMap(0) Then Fail("sync map validation accepted unreadable process")
+$g_syncTeleport = False
+$g_wowPidList = $originalWowPidList
+$MapID = 0
+$version = "1.12.1"
+If Not CanTeleportToMap(230) Then Fail("1.12.1 map fallback blocked existing teleport")
+$version = "1.12.3"
+$MapID = $originalMapIdAddress
 _MemoryClose($g_singleWowProcess)
 Local $originalFile = $teleport_file
 $teleport_file = @TempDir & "\teleport_category_navigation_save.fav"
 Save($g_listview)
 Local $saved = FileReadToArray($teleport_file)
-If @error Or UBound($saved) <> UBound($g_teleList_whole) / 5 Then Fail("category save lost points")
+If @error Or UBound($saved) <> UBound($g_teleList_whole) / 6 Then Fail("category save lost points")
 FileDelete($teleport_file)
+$teleport_file = $originalFile
+
+Local $fixtureFile = @TempDir & "\teleport_fav_fixture_" & @AutoItPID & ".fav"
+Local $fixture = FileOpen($fixtureFile, $FO_OVERWRITE + $FO_UTF8_NOBOM)
+FileWrite($fixture, "old4#1#2#3" & @CRLF & "old5#4#5#6#1.5" & @CRLF & _
+    "zero#7#8#9#0#0" & @CRLF & "dungeon#10#11#12#2.5#230" & @CRLF & _
+    "missingr#13#14#15##0" & @CRLF & "legacy4" & @CRLF & "16" & @CRLF & "17" & @CRLF & "18" & @CRLF & _
+    "legacy5" & @CRLF & "19" & @CRLF & "20" & @CRLF & "21" & @CRLF & "1.25" & @CRLF)
+FileClose($fixture)
+$teleport_file = $fixtureFile
+InitTeleportList()
+If UBound($g_teleList_whole) <> 42 Then Fail("mixed fav formats lost rows")
+If String($g_teleList_whole[4]) <> "" Or String($g_teleList_whole[5]) <> "" Then Fail("old four field record gained metadata")
+If String($g_teleList_whole[16]) <> "0" Or String($g_teleList_whole[17]) <> "0" Then Fail("zero facing or map was lost")
+If String($g_teleList_whole[23]) <> "230" Or String($g_teleList_whole[29]) <> "0" Then Fail("map metadata was not parsed")
+If String($g_teleList_whole[40]) <> "1.25" Or String($g_teleList_whole[41]) <> "" Then Fail("legacy five-line record was not parsed")
+Local $fixtureLines = FileReadToArray($fixtureFile)
+Local $hotkeyPoint = FindPostionFromFavFile("zero", $fixtureLines, UBound($fixtureLines), True)
+If UBound($hotkeyPoint) <> 5 Or String($hotkeyPoint[3]) <> "0" Or String($hotkeyPoint[4]) <> "0" Then Fail("hotkey metadata lost zero")
+Local $legacyPoint = FindPostionFromFavFile("legacy5", $fixtureLines, UBound($fixtureLines), True)
+If UBound($legacyPoint) <> 5 Or String($legacyPoint[3]) <> "1.25" Then Fail("hotkey legacy lookup failed")
+Save($g_listview)
+InitTeleportList()
+If UBound($g_teleList_whole) <> 42 Or String($g_teleList_whole[17]) <> "0" Or String($g_teleList_whole[23]) <> "230" Then Fail("save reload lost map metadata")
+If TeleportInterface(1, 2, 3, 0, "blocked", 0) <> False Then Fail("unverified map was not blocked")
+FileDelete($fixtureFile)
 $teleport_file = $originalFile
 GUIDelete($ui)
 FileWrite($smokeReport, "passed")

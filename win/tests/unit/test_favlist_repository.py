@@ -57,3 +57,13 @@ def test_malformed_lines_are_skipped(tmp_path: Path):
     points = FavlistRepository(p).load()
     assert len(points) == 1
     assert points[0].description == "ok-c"
+
+
+def test_optional_facing_and_map_survive_round_trip(tmp_path: Path):
+    p = tmp_path / "fav.fav"
+    p.write_text("a#1#2#3#0#0\nb#4#5#6#1.5#230\nc#7#8#9\nd#1#2#3##0\n", encoding="utf-8")
+    repo = FavlistRepository(p)
+    points = repo.load()
+    assert [(p.facing, p.map_id) for p in points] == [(0.0, 0), (1.5, 230), (None, None), (None, 0)]
+    repo.save(points)
+    assert repo.load() == points
