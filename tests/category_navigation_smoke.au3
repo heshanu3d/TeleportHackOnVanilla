@@ -71,11 +71,30 @@ GUICtrlCreateLabel("版本更新日志", 16, 110, 365, 22)
 Local $notesEdit = GUICtrlCreateEdit(GetReleaseNotes(), 16, 138, 368, 755, BitOR($ES_READONLY, $ES_MULTILINE, $WS_VSCROLL, $ES_AUTOVSCROLL))
 GUICtrlSetFont($notesEdit, 9, 400, 0, "Microsoft YaHei UI")
 GUICtrlCreateTabItem("")
+Local $ignoreEscape = IgnoreMainWindowEscape($ui)
 GUIRegisterMsg($WM_NOTIFY, "WM_NOTIFY")
 GUISetState(@SW_SHOW)
+CheckEscape($ui, $g_input, $ignoreEscape)
+CheckEscape($ui, $g_listview, $ignoreEscape)
+_GUICtrlTab_ActivateTab($g_categoryTab, 1)
+CheckEscape($ui, $g_categoryGrid, $ignoreEscape)
+_GUICtrlTab_ActivateTab($g_categoryTab, 2)
+CheckEscape($ui, $pollInput, $ignoreEscape)
+_GUICtrlTab_ActivateTab($g_categoryTab, 3)
+CheckEscape($ui, $notesEdit, $ignoreEscape)
+_GUICtrlTab_ActivateTab($g_categoryTab, 0)
+
+Local $shuffledCategories = StringSplit("影月谷|北风苔原|自定义二|冬泉谷|西部荒野|赞加沼泽|死亡骑士|主城|黑海岸|艾尔文森林|地狱火半岛|龙骨荒野|泰达希尔|湿地|达纳苏斯|暮色森林|灰谷|嚎风峡湾|纳格兰|希利苏斯", "|", 2)
+RefreshCategoryGrid($shuffledCategories)
+CheckGroupOrder(0, "所有|自定义二|主城|达纳苏斯")
+CheckGroupOrder(1, "艾尔文森林|西部荒野|湿地|暮色森林")
+CheckGroupOrder(2, "泰达希尔|黑海岸|灰谷|冬泉谷|希利苏斯")
+CheckGroupOrder(3, "地狱火半岛|赞加沼泽|纳格兰|影月谷")
+CheckGroupOrder(4, "死亡骑士|嚎风峡湾|北风苔原|龙骨荒野")
+RefreshCategoryGrid($categories)
 
 If GUICtrlRead($authorLabel) <> "作者：shan.he" Then Fail("about author missing")
-Local $tagNames[11] = ["v0.1", "v0.2", "v0.3", "v0.4", "v0.4.1", "v0.4.2", "v0.4.3", "v0.4.4", "v0.5", "v0.5.1", "0.5.2"]
+Local $tagNames[13] = ["v0.1", "v0.2", "v0.3", "v0.4", "v0.4.1", "v0.4.2", "v0.4.3", "v0.4.4", "v0.5", "v0.5.1", "v0.5.2", "v0.5.3", "v0.5.4"]
 For $i = 0 To UBound($tagNames) - 1
     If StringInStr(GUICtrlRead($notesEdit), $tagNames[$i] & @CRLF) = 0 Then Fail("about release notes missing: " & $tagNames[$i])
 Next
@@ -278,10 +297,50 @@ If UBound($g_teleList_whole) <> 42 Or String($g_teleList_whole[17]) <> "0" Or St
 If TeleportInterface(1, 2, 3, 0, "blocked", 0) <> False Then Fail("unverified map was not blocked")
 FileDelete($fixtureFile)
 $teleport_file = $originalFile
+WinClose($ui)
+Local $closeTimer = TimerInit(), $receivedClose = False
+While TimerDiff($closeTimer) < 3000
+    If GUIGetMsg() = $GUI_EVENT_CLOSE Then
+        $receivedClose = True
+        ExitLoop
+    EndIf
+    Sleep(10)
+WEnd
+If Not $receivedClose Then Fail("window close did not produce a close event")
 GUIDelete($ui)
 FileWrite($smokeReport, "passed")
 ConsoleWrite("category navigation smoke: passed" & @CRLF)
 Exit 0
+
+Func CheckGroupOrder($group, $expectedText)
+    Local $expected = StringSplit($expectedText, "|", 2)
+    Local $endRow = _GUICtrlListView_GetItemCount($g_categoryGrid)
+    If $group < 4 Then $endRow = $g_categoryGroupRows[$group + 1] - 1
+    Local $index = 0
+    For $row = $g_categoryGroupRows[$group] + 1 To $endRow - 1
+        For $column = 0 To 2
+            Local $item = _GUICtrlListView_GetItemText($g_categoryGrid, $row, $column)
+            If $item = "" Then ContinueLoop
+            If $index >= UBound($expected) Then Fail("extra category in group " & $group & ": " & $item)
+            If $item <> $expected[$index] Then Fail("wrong category order in group " & $group & ": " & $item)
+            $index += 1
+        Next
+    Next
+    If $index <> UBound($expected) Then Fail("missing category in group " & $group)
+EndFunc
+
+Func CheckEscape($ui, $control, $ignoreEscape)
+    _WinAPI_PostMessage(GUICtrlGetHandle($control), $WM_KEYDOWN, 0x1B, 0)
+    _WinAPI_PostMessage(GUICtrlGetHandle($control), $WM_KEYUP, 0x1B, 0)
+    Local $timer = TimerInit()
+    While TimerDiff($timer) < 3000
+        Local $message = GUIGetMsg()
+        If $message = $GUI_EVENT_CLOSE Then Fail("escape closed the main window")
+        If $message = $ignoreEscape Then Return
+        Sleep(10)
+    WEnd
+    Fail("escape was not handled by the main window")
+EndFunc
 
 Func CheckClick($ui, $category)
     _GUICtrlTab_ActivateTab($g_categoryTab, 1)

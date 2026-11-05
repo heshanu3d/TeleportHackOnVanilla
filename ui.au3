@@ -225,17 +225,26 @@ Func InitListview($listview = 0)
     return SwitchListviewWithCategory($g_category_selected)
 EndFunc
 
-Func CategoryGridGroup($name)
-    Switch $name
-        Case "艾尔文森林", "西部荒野", "赤脊山", "湿地", "暮色森林", "希尔斯布莱德", "阿拉希", "奥特兰克", "丹莫罗", "洛克莫丹", "荒芜之地", "荆棘谷", "灼热峡谷", "悲伤沼泽", "辛特兰", "诅咒之地", "燃烧平原", "西瘟疫", "东瘟疫"
-            Return 1
-        Case "泰达希尔", "灰谷", "闪光平原", "杜隆塔尔", "贫瘠之地", "尘泥沼泽", "凄凉之地", "菲拉斯", "塔纳利斯", "月光林地", "棘齿城", "安戈洛", "达纳苏斯", "冬泉谷", "希利苏斯"
-            Return 2
-        Case "地狱火半岛", "赞加沼泽", "纳格兰", "泰罗卡森林", "刀锋山", "虚空风暴", "影月谷"
-            Return 3
-        Case "死亡骑士", "秘血岛", "秘蓝岛", "嚎风峡湾", "北风苔原", "龙骨荒野", "晶歌森林", "祖达克", "索拉查盆地", "灰熊丘陵", "风暴峭壁", "冰冠冰川"
-            Return 4
+Func CategoryGridOrder($group)
+    Switch $group
+        Case 1
+            Return StringSplit("艾尔文森林|西部荒野|赤脊山|湿地|暮色森林|希尔斯布莱德|阿拉希|奥特兰克|丹莫罗|洛克莫丹|荒芜之地|荆棘谷|灼热峡谷|悲伤沼泽|辛特兰|诅咒之地|燃烧平原|西瘟疫|东瘟疫", "|", 2)
+        Case 2
+            Return StringSplit("泰达希尔|黑海岸|灰谷|闪光平原|杜隆塔尔|贫瘠之地|尘泥沼泽|凄凉之地|菲拉斯|塔纳利斯|月光林地|棘齿城|安戈洛|冬泉谷|希利苏斯", "|", 2)
+        Case 3
+            Return StringSplit("地狱火半岛|赞加沼泽|纳格兰|泰罗卡森林|刀锋山|虚空风暴|影月谷", "|", 2)
+        Case 4
+            Return StringSplit("死亡骑士|秘血岛|秘蓝岛|嚎风峡湾|北风苔原|龙骨荒野|晶歌森林|祖达克|索拉查盆地|灰熊丘陵|风暴峭壁|冰冠冰川", "|", 2)
     EndSwitch
+    Local $empty[0]
+    Return $empty
+EndFunc
+
+Func CategoryGridGroup($name)
+    For $group = 1 To 4
+        Local $order = CategoryGridOrder($group)
+        If _ArraySearch($order, $name) >= 0 Then Return $group
+    Next
     Return 0
 EndFunc
 
@@ -253,12 +262,16 @@ Func RefreshCategoryGrid(ByRef $category)
             $row = _GUICtrlListView_AddItem($g_categoryGrid, "所有")
             $column = 1
         EndIf
-        For $i = 0 To UBound($category) - 1
-            If CategoryGridGroup($category[$i]) <> $group Then ContinueLoop
+        Local $orderedCategories = $category
+        If $group > 0 Then $orderedCategories = CategoryGridOrder($group)
+        For $i = 0 To UBound($orderedCategories) - 1
+            Local $name = $orderedCategories[$i]
+            If $group = 0 And CategoryGridGroup($name) <> 0 Then ContinueLoop
+            If $group > 0 And _ArraySearch($category, $name) < 0 Then ContinueLoop
             If $column = 0 Then
-                $row = _GUICtrlListView_AddItem($g_categoryGrid, $category[$i])
+                $row = _GUICtrlListView_AddItem($g_categoryGrid, $name)
             Else
-                _GUICtrlListView_AddSubItem($g_categoryGrid, $row, $category[$i], $column)
+                _GUICtrlListView_AddSubItem($g_categoryGrid, $row, $name, $column)
             EndIf
             $column = Mod($column + 1, 3)
         Next
@@ -329,6 +342,14 @@ Func GetListFd($op = $FO_READ)
         print("An error occurred when reading the file.")
     EndIf
     Return $fd
+EndFunc
+
+Func IgnoreMainWindowEscape($ui)
+    GUISwitch($ui)
+    Local $ignoreEscape = GUICtrlCreateDummy()
+    Local $accelerators[1][2] = [["{ESC}", $ignoreEscape]]
+    GUISetAccelerators($accelerators, $ui)
+    Return $ignoreEscape
 EndFunc
 
 Func LaunchUI()
@@ -403,6 +424,7 @@ Func LaunchUI()
     Local $releaseNotes = GUICtrlCreateEdit(GetReleaseNotes(), 16, 138, 368, 755, BitOR($ES_READONLY, $ES_MULTILINE, $WS_VSCROLL, $ES_AUTOVSCROLL))
     GUICtrlSetFont($releaseNotes, 9, 400, 0, "Microsoft YaHei UI")
     GUICtrlCreateTabItem("")
+    IgnoreMainWindowEscape($ui)
     GUISetState(@SW_SHOW)
 
     GUIRegisterMsg($WM_NOTIFY, "WM_NOTIFY")
