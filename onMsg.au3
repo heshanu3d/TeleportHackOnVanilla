@@ -151,97 +151,117 @@ Func TeleportStepByStep($x, $y, $z, $r = "")
 EndFunc
 
 Func Teleport($listview)
-    $itemId = GUICtrlRead($listview)
-    If $itemId == 0 Then
-        Return
+    Return TeleportListRow($listview, _GUICtrlListView_GetNextItem($listview))
+EndFunc
+
+Func CategoryOfDescription($description)
+    Local $dash = StringInStr($description, "-")
+    If $dash > 0 Then Return StringLeft($description, $dash - 1)
+    Return $description
+EndFunc
+
+; Translate a displayed row to the authoritative unfiltered favourites array.
+Func GlobalPositionForVisibleRow($row)
+    If $row < 0 Or $row >= UBound($g_visibleSourceIndices) Then Return -1
+    Local $source = $g_visibleSourceIndices[$row]
+    If $g_category_selected = "所有" Then Return $source
+    Local $categoryRow = 0
+    For $i = 0 To Floor(UBound($g_teleList_whole) / 6) - 1
+        If CategoryOfDescription($g_teleList_whole[$i * 6]) <> $g_category_selected Then ContinueLoop
+        If $categoryRow = $source Then Return $i
+        $categoryRow += 1
+    Next
+    Return -1
+EndFunc
+
+Func RebuildCategoryData()
+    Local $categories = ObjCreate("Scripting.Dictionary")
+    For $i = 0 To UBound($g_teleList_whole) - 6 Step 6
+        Local $name = CategoryOfDescription($g_teleList_whole[$i])
+        If Not $categories.Exists($name) Then $categories.Add($name, ObjCreate("System.Collections.ArrayList"))
+        Local $items = $categories.Item($name)
+        For $j = 0 To 5
+            $items.Add($g_teleList_whole[$i + $j])
+        Next
+    Next
+    $g_teleListDict.RemoveAll()
+    Local $names = $categories.Keys
+    For $i = 0 To $categories.Count - 1
+        Local $items = $categories.Item($names[$i])
+        $g_teleListDict.Add($names[$i], $items.ToArray())
+    Next
+    If $g_category_selected <> "所有" And Not $g_teleListDict.Exists($g_category_selected) Then
+        If $g_searchEdit <> 0 Then
+            SelectSearchCategory("所有")
+        Else
+            $g_category_selected = "所有"
+            $g_currentSearch = SearchForCategory("所有")
+        EndIf
     EndIf
-    $text = GUICtrlRead($itemId)
-    If $text == 0 Then
-        Return
+    If $g_categoryLabel <> 0 Then GUICtrlSetData($g_categoryLabel, "当前：" & $g_category_selected)
+    RefreshCategoryGrid($names)
+    If $g_categorySettingsGroup <> 0 Then RefreshCategorySettings(_GUICtrlListBox_GetCurSel($g_categorySettingsGroup))
+    SwitchListviewWithCategory($g_category_selected)
+EndFunc
+
+Func UpdateFavourite($action, $visibleRow, $description = "", $position = 0)
+    Local $count = Floor(UBound($g_teleList_whole) / 6)
+    Local $row = GlobalPositionForVisibleRow($visibleRow)
+    If $action <> "add" And $row < 0 Then Return False
+    If $action <> "delete" Then
+        If Not IsArray($position) Or UBound($position) < 5 Or StringStripWS($description, 3) = "" Then Return False
+        If StringInStr($description, "#") Or StringRegExp($description, "[\r\n]") Then Return False
     EndIf
-    $array = StringSplit($text, '|')
-    Local $r = ""
-    If $array[0] >= 5 Then $r = $array[5]
-    Local $map = ""
-    If $array[0] >= 6 Then $map = $array[6]
-    TeleportInterface($array[2], $array[3], $array[4], $r, $array[1], $map)
+    Switch $action
+        Case "add", "insert", "append"
+            If $action = "add" Then $row = $count
+            If $action = "append" Then $row += 1
+            Local $oldSize = UBound($g_teleList_whole), $offset = $row * 6
+            ReDim $g_teleList_whole[$oldSize + 6]
+            For $i = $oldSize - 1 To $offset Step -1
+                $g_teleList_whole[$i + 6] = $g_teleList_whole[$i]
+            Next
+            $g_teleList_whole[$offset] = $description
+            For $i = 0 To 4
+                $g_teleList_whole[$offset + $i + 1] = $position[$i]
+            Next
+        Case "edit"
+            $g_teleList_whole[$row * 6] = $description
+            For $i = 0 To 4
+                $g_teleList_whole[$row * 6 + $i + 1] = $position[$i]
+            Next
+        Case "delete"
+            _ArrayDelete($g_teleList_whole, ($row * 6) & "-" & ($row * 6 + 5))
+        Case Else
+            Return False
+    EndSwitch
+    RebuildCategoryData()
+    If $g_autoSave And Not Save($g_listview) Then print("Automatic save failed; changes remain in memory")
+    Return True
 EndFunc
 
 Func AppendPos($input, $listview, $cateText)
-	$currPosArr = ReadPosition()
-	If Not IsArray($currPosArr) Then Return
-	$text = GUICtrlRead($input)
-	$selectedLine = _GUICtrlListView_GetSelectedIndices($listview)
-	;~ print($text)
-	;~ GUICtrlCreateListViewItem($text, $listview)
-	_GUICtrlListView_InsertItem($listview, $text, $selectedLine + 1)
-	For $i = 1 to _GUICtrlListView_GetColumnCount($listview) - 1
-		_GUICtrlListView_SetItemText($listview, $selectedLine + 1, $currPosArr[$i-1], $i)
-	Next
-	InsertPos_telelist($cateText, $selectedLine + 1, $text, $currPosArr)
+    Local $position = ReadPosition()
+    If IsArray($position) Then UpdateFavourite("append", _GUICtrlListView_GetNextItem($listview), GUICtrlRead($input), $position)
 EndFunc
 
 Func InsertPos($input, $listview, $cateText)
-    $currPosArr = ReadPosition()
-    If Not IsArray($currPosArr) Then Return
-    $text = GUICtrlRead($input)
-	$selectedLine = _GUICtrlListView_GetSelectedIndices($listview)
-    ;~ print($text)
-    ;~ GUICtrlCreateListViewItem($text, $listview)
-	_GUICtrlListView_InsertItem($listview, $text, $selectedLine)
-	For $i = 1 to _GUICtrlListView_GetColumnCount($listview) - 1
-		_GUICtrlListView_SetItemText($listview, $selectedLine, $currPosArr[$i-1], $i)
-	Next
-	InsertPos_telelist($cateText, $selectedLine, $text, $currPosArr)
+    Local $position = ReadPosition()
+    If IsArray($position) Then UpdateFavourite("insert", _GUICtrlListView_GetNextItem($listview), GUICtrlRead($input), $position)
 EndFunc
 
 Func AddPos($input, $listview, $cateText)
-    $currPosArr = ReadPosition()
-    If Not IsArray($currPosArr) Then Return
-    Local $desc = GUICtrlRead($input)
-    $text = $desc &"|"& $currPosArr[0] &"|"& $currPosArr[1] &"|"& $currPosArr[2] &"|"& $currPosArr[3] &"|"& $currPosArr[4]
-    ;~ print($text)
-    GUICtrlCreateListViewItem($text, $listview)
-	;~ AddPos_telelist($cateText, $desc, $currPosArr)
-	AddPos_telelist($cateText, $desc, $currPosArr)
+    Local $position = ReadPosition()
+    If IsArray($position) Then UpdateFavourite("add", -1, GUICtrlRead($input), $position)
 EndFunc
 
 Func EditPos($input, $listview, $cateText)
-    $currPosArr = ReadPosition()
-    If Not IsArray($currPosArr) Then Return
-    $text = GUICtrlRead($input)
-    $selectedLine = _GUICtrlListView_GetSelectedIndices($listview)
-    _GUICtrlListView_SetItem($listview, $text, $selectedLine)
-    _GUICtrlListView_SetItem($listview, $currPosArr[0], $selectedLine, 1)
-    _GUICtrlListView_SetItem($listview, $currPosArr[1], $selectedLine, 2)
-    _GUICtrlListView_SetItem($listview, $currPosArr[2], $selectedLine, 3)
-    _GUICtrlListView_SetItem($listview, $currPosArr[3], $selectedLine, 4)
-    _GUICtrlListView_SetItem($listview, $currPosArr[4], $selectedLine, 5)
-	;~ EditPos_telelist($cateText, $selectedLine, $text, $currPosArr)
-	EditPos_telelist($cateText, $selectedLine, $text, $currPosArr)
+    Local $position = ReadPosition()
+    If IsArray($position) Then UpdateFavourite("edit", _GUICtrlListView_GetNextItem($listview), GUICtrlRead($input), $position)
 EndFunc
 
 Func DelPos($listview, $cateText)
-    ;~ print("$DelLine : " & $DelLine)
-    Local $selectedLine
-    If $DelLine <> -1 Then
-        $selectedLine = $DelLine
-        $DelLine = -1
-    Else
-        $selectedLine = _GUICtrlListView_GetSelectedIndices($listview)
-    EndIf
-    _GUICtrlListView_DeleteItem($listview, $selectedLine)
-	DelPos_telelist($cateText, $selectedLine)
-	;~ print("delete " & $selectedLine)
-    $lineCount = _GUICtrlListView_GetItemCount($listview)
-    if $selectedLine > $lineCount - 1 Then
-        _GUICtrlListView_SetItemSelected($listview, $selectedLine - 1)
-		;~ print("select " & $selectedLine - 1)
-    ElseIf $lineCount = 0 Then
-        Return
-    Else
-        $DelLine = $selectedLine
-    EndIf
+    UpdateFavourite("delete", _GUICtrlListView_GetNextItem($listview))
 EndFunc
 
 Func SaveOld($listview)
@@ -278,28 +298,30 @@ Func SaveFromList(ByRef $telelist, ByRef $pointCnt, $fd)
 EndFunc
 
 Func Save($listview)
-    $fd = GetListFd($FO_OVERWRITE + $FO_CREATEPATH)
+    Local $tmp = $teleport_file & ".tmp." & @AutoItPID
+    Local $fd = FileOpen($tmp, $FO_OVERWRITE + $FO_CREATEPATH + $FO_UTF8_NOBOM)
     If $fd = -1 Then
-        print("An error occurred when opening the file.")
-        Return
+        print("Failed to open temporary favourites file")
+        Return False
     EndIf
-
-	Local $pointCnt = 0
-
-	If $g_category_selected = "所有" Then
-		$telelist = Save_telelist("所有")
-		SaveFromList($telelist, $pointCnt, $fd)
-	Else
-		Local $categories = GetAllCategoryNames()
-		For $i = 0 To UBound($categories) - 1
-			$telelist = Save_telelist($categories[$i])
-			SaveFromList($telelist, $pointCnt, $fd)
-		Next
-	EndIf
-
-
-    print("saved " & $pointCnt & " teleports")
-	FileClose($fd)
+    Local $ok = True
+    For $i = 0 To UBound($g_teleList_whole) - 6 Step 6
+        Local $line = $g_teleList_whole[$i]
+        For $c = 1 To 5
+            $line &= $g_telelist_split_str & $g_teleList_whole[$i + $c]
+        Next
+        If Not FileWriteLine($fd, $line) Then
+            $ok = False
+            ExitLoop
+        EndIf
+    Next
+    FileClose($fd)
+    If Not $ok Or Not FileMove($tmp, $teleport_file, $FC_OVERWRITE) Then
+        print("Failed to save favourites; previous file remains unchanged")
+        Return False
+    EndIf
+    print("saved " & Floor(UBound($g_teleList_whole) / 6) & " teleports")
+    Return True
 EndFunc
 
 Func ReloadUI($listview, ByRef $list, ByRef $playernameList)
@@ -312,9 +334,16 @@ Func ReloadUI($listview, ByRef $list, ByRef $playernameList)
     Local $tTeleport = TimerDiff($t1)
 
     Local $t2 = TimerInit()
-    If $g_category_selected <> "所有" And Not $g_teleListDict.Exists($g_category_selected) Then $g_category_selected = "所有"
+    If $g_category_selected <> "所有" And Not $g_teleListDict.Exists($g_category_selected) Then
+        If $g_searchEdit <> 0 Then
+            SelectSearchCategory("所有")
+        Else
+            $g_category_selected = "所有"
+        EndIf
+    EndIf
     If $g_categoryLabel <> 0 Then GUICtrlSetData($g_categoryLabel, "当前：" & $g_category_selected)
     RefreshCategoryGrid($category)
+    If $g_categorySettingsGroup <> 0 Then RefreshCategorySettings(_GUICtrlListBox_GetCurSel($g_categorySettingsGroup))
     Local $tCategoryGrid = TimerDiff($t2)
 
     Local $t3 = TimerInit()

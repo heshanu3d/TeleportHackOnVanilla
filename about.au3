@@ -1,5 +1,9 @@
 Func GetReleaseNotes()
-    Return "v0.5.4" & @CRLF & _
+    Return "v0.5.5" & @CRLF & _
+        "  - 增加自定义分类设置及 Ctrl、Shift 批量选择。" & @CRLF & _
+        "  - 增加搜索历史、独立搜索及自动保存、右键传送。" & @CRLF & _
+        "  - 增加主题、透明度、布局和坐标列设置。" & @CRLF & @CRLF & _
+        "v0.5.4" & @CRLF & _
         "  - 分类导航按各地图分组的预设顺序排列。" & @CRLF & _
         "  - 主窗口按 Esc 不再退出。" & @CRLF & _
         "  - 补充收藏坐标的地图 ID。" & @CRLF & @CRLF & _

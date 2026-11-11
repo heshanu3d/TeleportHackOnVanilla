@@ -233,25 +233,22 @@ Func InitListviewWithList(ByRef $array, $info="")
 
     Local $t2 = TimerInit()
 
-    ; 计算行数
-    Local $rowCount = Floor($lineCount / $columnCount)
-
+    ; Keep each visible row mapped to its unfiltered category row.
+    Local $matches = ObjCreate("System.Collections.ArrayList")
+    For $i = 0 To Floor($lineCount / $columnCount) - 1
+        If $g_currentSearch = "" Or StringInStr(String($array[$i * $columnCount]), $g_currentSearch) > 0 Then $matches.Add($i)
+    Next
+    Local $rowCount = $matches.Count
+    ReDim $g_visibleSourceIndices[$rowCount]
     If $rowCount > 0 Then
-        ; 将1D数组转换为2D数组，供 _GUICtrlListView_AddArray 使用
-        ; 2D数组格式: [行][列]，第0列是主项，其余是子项
         Local $items2D[$rowCount][$columnCount]
-
-        Local $rowIdx = 0
-        Local $i = 0
-        While $i + $columnCount - 1 < $lineCount
+        For $rowIdx = 0 To $rowCount - 1
+            Local $sourceRow = $matches.Item($rowIdx)
+            $g_visibleSourceIndices[$rowIdx] = $sourceRow
             For $c = 0 To $columnCount - 1
-                $items2D[$rowIdx][$c] = $array[$i + $c]
+                $items2D[$rowIdx][$c] = $array[$sourceRow * $columnCount + $c]
             Next
-            $i = $i + $columnCount
-            $rowIdx = $rowIdx + 1
-        WEnd
-
-        ; 批量添加，比逐条 AddItem/AddSubItem 快10-50倍
+        Next
         _GUICtrlListView_AddArray($listview, $items2D)
     EndIf
 

@@ -32,8 +32,13 @@ Func WM_NOTIFY($hWnd, $Msg, $wParam, $lParam)
                         Local $row = DllStructGetData($tDraw, "dwItemSpec")
                         For $i = 0 To UBound($g_categoryGroupRows) - 1
                             If $row = $g_categoryGroupRows[$i] Then
-                                DllStructSetData($tDraw, "clrTextBk", 0xE8E2D8)
-                                DllStructSetData($tDraw, "clrText", 0x3B3025)
+                                If $g_theme = "dark" Then
+                                    DllStructSetData($tDraw, "clrTextBk", 0x454545)
+                                    DllStructSetData($tDraw, "clrText", 0xF0F0F0)
+                                Else
+                                    DllStructSetData($tDraw, "clrTextBk", 0xE8E2D8)
+                                    DllStructSetData($tDraw, "clrText", 0x3B3025)
+                                EndIf
                                 If $stage = $CDDS_ITEMPREPAINT Then Return BitOR($CDRF_NEWFONT, $CDRF_NOTIFYSUBITEMDRAW)
                                 Return $CDRF_NEWFONT
                             EndIf
@@ -42,6 +47,12 @@ Func WM_NOTIFY($hWnd, $Msg, $wParam, $lParam)
             EndSwitch
         Case $listview
             Switch $iCode
+                Case $NM_RCLICK
+                    If $g_rightClickTeleport Then
+                        Local $rightClick = DllStructCreate($tagNMITEMACTIVATE, $lParam)
+                        Local $rightRow = DllStructGetData($rightClick, "Index")
+                        If $rightRow >= 0 And $rightRow < _GUICtrlListView_GetItemCount($listview) Then $g_pendingRightClick = $rightRow
+                    EndIf
                 Case $NM_CLICK
                     Local $tInfo = DllStructCreate($tagNMLISTVIEW, $lParam)
                     Local $iItem = DllStructGetData($tInfo, "Item")
@@ -63,6 +74,24 @@ Func WM_NOTIFY($hWnd, $Msg, $wParam, $lParam)
     EndSwitch
 
     Return $GUI_RUNDEFMSG
+EndFunc
+
+Func ApplyPendingRightClick()
+    Local $row = $g_pendingRightClick
+    $g_pendingRightClick = -1
+    If Not $g_rightClickTeleport Or $row < 0 Or $row >= _GUICtrlListView_GetItemCount($g_listview) Then Return
+    TeleportListRow($g_listview, $row)
+EndFunc
+
+Func TeleportListRow($listview, $row)
+    If $row < 0 Or $row >= _GUICtrlListView_GetItemCount($listview) Then Return False
+    Local $description = _GUICtrlListView_GetItemText($listview, $row, 0)
+    Local $x = _GUICtrlListView_GetItemText($listview, $row, 1)
+    Local $y = _GUICtrlListView_GetItemText($listview, $row, 2)
+    Local $z = _GUICtrlListView_GetItemText($listview, $row, 3)
+    Local $r = _GUICtrlListView_GetItemText($listview, $row, 4)
+    Local $map = _GUICtrlListView_GetItemText($listview, $row, 5)
+    Return TeleportInterface($x, $y, $z, $r, $description, $map)
 EndFunc
 
 Func TeleportDBClick($listview)

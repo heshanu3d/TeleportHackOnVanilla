@@ -16,6 +16,8 @@ Global Const $g_recentTeleportLimit = 20
 Global $g_recentTeleportCount = 0
 Global $g_recentTeleports[$g_recentTeleportLimit][6]
 Global $g_input
+Global $g_currentSearch = ""
+Global $g_visibleSourceIndices[0]
 Global $g_speed
 Global $g_telelist_split_str = "#"
 

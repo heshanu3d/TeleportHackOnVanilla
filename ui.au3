@@ -250,24 +250,23 @@ EndFunc
 
 Func RefreshCategoryGrid(ByRef $category)
     If $g_categoryGrid = 0 Then Return
-    Local $groups[5] = ["杂项", "东部王国", "卡利姆多", "燃烧的远征", "巫妖王之怒"]
+    EnsureCategoryAssignments($category)
+    ReDim $g_categoryGroupRows[$g_categoryGroups.Count]
     _GUICtrlListView_BeginUpdate($g_categoryGrid)
     _GUICtrlListView_DeleteAllItems($g_categoryGrid)
-    For $group = 0 To 4
-        If $group > 0 Then _GUICtrlListView_AddItem($g_categoryGrid, "")
-        $g_categoryGroupRows[$group] = _GUICtrlListView_AddItem($g_categoryGrid, "【" & $groups[$group] & "】")
+    For $groupIndex = 0 To $g_categoryGroups.Count - 1
+        Local $group = $g_categoryGroups.Item($groupIndex), $items = $group.Item("items")
+        If $groupIndex > 0 Then _GUICtrlListView_AddItem($g_categoryGrid, "")
+        $g_categoryGroupRows[$groupIndex] = _GUICtrlListView_AddItem($g_categoryGrid, "【" & $group.Item("name") & "】")
         Local $column = 0
         Local $row = -1
-        If $group = 0 Then
+        If $groupIndex = 0 Then
             $row = _GUICtrlListView_AddItem($g_categoryGrid, "所有")
             $column = 1
         EndIf
-        Local $orderedCategories = $category
-        If $group > 0 Then $orderedCategories = CategoryGridOrder($group)
-        For $i = 0 To UBound($orderedCategories) - 1
-            Local $name = $orderedCategories[$i]
-            If $group = 0 And CategoryGridGroup($name) <> 0 Then ContinueLoop
-            If $group > 0 And _ArraySearch($category, $name) < 0 Then ContinueLoop
+        For $i = 0 To $items.Count - 1
+            Local $name = $items.Item($i)
+            If _ArraySearch($category, $name) < 0 Then ContinueLoop
             If $column = 0 Then
                 $row = _GUICtrlListView_AddItem($g_categoryGrid, $name)
             Else
@@ -331,7 +330,9 @@ Func ApplyPendingCategory()
     Local $selectedCategory = $g_pendingCategory
     $g_pendingCategory = ""
     If $selectedCategory <> "所有" And Not $g_teleListDict.Exists($selectedCategory) Then Return
+    If $g_searchEdit <> 0 Then SelectSearchCategory($selectedCategory)
     SwitchListview($selectedCategory)
+    If $g_searchEdit <> 0 Then SwitchListviewWithCategory($selectedCategory)
     If $g_categoryLabel <> 0 Then GUICtrlSetData($g_categoryLabel, "当前：" & $selectedCategory)
     _GUICtrlTab_ActivateTab($g_categoryTab, 0)
 EndFunc
@@ -347,7 +348,8 @@ EndFunc
 Func IgnoreMainWindowEscape($ui)
     GUISwitch($ui)
     Local $ignoreEscape = GUICtrlCreateDummy()
-    Local $accelerators[1][2] = [["{ESC}", $ignoreEscape]]
+    $g_searchEnter = GUICtrlCreateDummy()
+    Local $accelerators[2][2] = [["{ESC}", $ignoreEscape], ["{ENTER}", $g_searchEnter]]
     GUISetAccelerators($accelerators, $ui)
     Return $ignoreEscape
 EndFunc
@@ -357,18 +359,26 @@ Func LaunchUI()
 		Return
 	EndIf
 
+    LoadPreferences()
+    $g_currentSearch = SearchForCategory($g_category_selected)
     $ui = GUICreate($winTitle, 400, 925, 100, 80, -1, $WS_EX_ACCEPTFILES)
+    $g_mainWindow = $ui
     GUISetBkColor(0x00E0FFFF) ; will change background color
     Local $pollSeconds = LoadWowPidPollInterval()
     $g_categoryTab = GUICtrlCreateTab(0, 0, 400, 920)
     GUICtrlCreateTabItem("坐标点")
+    CreateThemedTabBackground(0)
     $g_log = GUICtrlCreateEdit("", 10, 735, 380, 175, BitOR($ES_AUTOVSCROLL, $WS_VSCROLL))
+    GUICtrlCreateLabel("搜索", 10, 40, 35, 20)
+    $g_searchEdit = GUICtrlCreateInput($g_currentSearch, 45, 36, 135, 22)
+    GUICtrlCreateLabel("历史", 185, 40, 35, 20)
+    $g_searchCombo = GUICtrlCreateCombo("", 220, 36, 170, 25, $CBS_DROPDOWNLIST)
 
     Local $category = InitTeleportList()
     $listview = InitListview()
     $g_listview = $listview
 
-    GUICtrlCreateLabel("最近使用的坐标", 10, 443, 180, 20)
+    $g_recentLabel = GUICtrlCreateLabel("最近使用的坐标", 10, 443, 180, 20)
     $g_categoryLabel = GUICtrlCreateLabel("当前：" & $g_category_selected, 190, 443, 200, 20, $SS_RIGHT)
     $g_recentListview = GUICtrlCreateListView("最近使用|x|y|z", 10, 463, 380, 147)
     _GUICtrlListView_SetColumnWidth($g_recentListview, 0, 160)
@@ -382,6 +392,8 @@ Func LaunchUI()
 	Local $pidList = 0
 	Local $playernameList = 0
 	InitPidAndPlaynameList($pidList, $playernameList)
+    $g_pidControl = $pidList
+    $g_playerNameControl = $playernameList
     $addPos = GUICtrlCreateButton("addPos", 10, 650, 70, 22)
     $editPos = GUICtrlCreateButton("editPos", 88, 650, 70, 22)
     $delPos = GUICtrlCreateButton("delPos", 166, 650, 70, 22)
@@ -390,8 +402,17 @@ Func LaunchUI()
     $save = GUICtrlCreateButton("save", 190, 680, 85, 22)
     $reload = GUICtrlCreateButton("reload", 280, 680, 100, 22)
     $onTop = GUICtrlCreateCheckbox("OnTop", 10, 710, 75, 20)
+    $g_mainButtons[0] = $addPos
+    $g_mainButtons[1] = $editPos
+    $g_mainButtons[2] = $delPos
+    $g_mainButtons[3] = $insertPos
+    $g_mainButtons[4] = $appendPos
+    $g_mainButtons[5] = $save
+    $g_mainButtons[6] = $reload
+    $g_onTopControl = $onTop
 
     GUICtrlCreateTabItem("分类导航")
+    CreateThemedTabBackground(1)
     $g_categoryGrid = GUICtrlCreateListView("分类|分类|分类", 10, 40, 380, 865)
     For $column = 0 To 2
         _GUICtrlListView_SetColumnWidth($g_categoryGrid, $column, 116)
@@ -400,7 +421,12 @@ Func LaunchUI()
     _GUICtrlListView_SetExtendedListViewStyle($g_categoryGrid, BitOR($LVS_EX_GRIDLINES, $LVS_EX_DOUBLEBUFFER, $LVS_EX_FULLROWSELECT))
     RefreshCategoryGrid($category)
 
+    GUICtrlCreateTabItem("分类设置")
+    CreateThemedTabBackground(2)
+    CreateCategorySettings()
+
     GUICtrlCreateTabItem("设置")
+    CreateThemedTabBackground(3)
     GUICtrlCreateLabel("传送设置", 16, 44, 120, 20)
     $sync = GUICtrlCreateCheckbox("sync-tp", 16, 72, 82, 22)
     $step = GUICtrlCreateCheckbox("step-tp", 112, 72, 82, 22)
@@ -416,8 +442,10 @@ Func LaunchUI()
     GUICtrlSetLimit($pidPollInput, 4)
     GUICtrlCreateLabel("秒", 88, 269, 28, 20)
     Local $applyPollInterval = GUICtrlCreateButton("应用", 124, 264, 70, 26)
+    CreateExtendedSettings()
 
     GUICtrlCreateTabItem("关于")
+    CreateThemedTabBackground(4)
     GUICtrlCreateLabel("TeleportHack On Vanilla and WLK", 16, 42, 365, 24)
     GUICtrlCreateLabel("作者：shan.he", 16, 72, 365, 22)
     GUICtrlCreateLabel("版本更新日志", 16, 110, 365, 22)
@@ -426,18 +454,26 @@ Func LaunchUI()
     GUICtrlCreateTabItem("")
     IgnoreMainWindowEscape($ui)
     GUISetState(@SW_SHOW)
+    ApplyAppearance()
 
     GUIRegisterMsg($WM_NOTIFY, "WM_NOTIFY")
     Local $pidPollTimer = TimerInit()
     Do
         $msg = GUIGetMsg()
+        PollSearchInput()
         ApplyPendingCategory()
         ApplyPendingRecentTeleport()
+        ApplyPendingRightClick()
+        HandleSearchHistory($msg)
+        HandleCategorySettings($msg)
+        HandleExtendedSettings($msg)
         If TimerDiff($pidPollTimer) >= $g_wowPidPollIntervalMs Then
             $pidPollTimer = TimerInit()
             CheckWowPidForReload($listview, $pidList, $playernameList)
         EndIf
         Select
+            Case $msg = $g_searchEnter
+                FinishSearchEdit()
             Case $msg = $login
                 Login()
             Case $msg = $insertPos
@@ -451,8 +487,7 @@ Func LaunchUI()
             Case $msg = $delPos
                 DelPos($listview, $g_category_selected)
             Case $msg = $save
-                Save($listview)
-                ReloadUI($listview, $pidList, $playernameList)
+                If Save($listview) Then ReloadUI($listview, $pidList, $playernameList)
             Case $msg = $reload
                 ReloadUI($listview, $pidList, $playernameList)
 			Case $msg = $sync
@@ -475,4 +510,6 @@ Func LaunchUI()
                 WinSetOnTop($ui, "", BitAND(GUICtrlRead($onTop), $GUI_CHECKED) <> 0)
         EndSelect
     Until $msg = $GUI_EVENT_CLOSE
+    FinishSearchEdit()
+    If $g_settingsDirty Then SavePreferences()
 EndFunc

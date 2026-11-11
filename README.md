@@ -12,6 +12,22 @@ default 30). Applying a new value saves it in `teleport_ui.ini` beside the
 script/executable and restarts the polling timer. The **关于** tab lists the
 author and release notes for each tag.
 
+The AutoIt **分类设置** tab manages category groups and category membership.
+Use Ctrl and Shift to select multiple categories for moving or reordering.
+Assignments for categories absent from the current favourites file are kept.
+The main page filters descriptions as you type; searches enter the history when
+editing ends, and selecting a history entry restores it. **独立搜索** keeps a
+separate search for each navigation category. Search history can be edited in
+**设置**.
+
+The **设置** tab also provides automatic saving after coordinate edits,
+right-click teleport, light/dark themes, opacity, layout dimensions, and
+individual coordinate-column visibility. These preferences and category
+assignments are stored in teleport_preferences.ini beside the executable;
+the existing PID timer stays in teleport_ui.ini. Hiding a column does not
+remove its saved value. The Python/PySide6 application has its own settings
+and does not share this AutoIt preferences file.
+
 ## AutoIt builds (Windows)
 
 Run `build.bat` from any working directory. The tracked `.build.ini` contains

@@ -85,16 +85,18 @@ CheckEscape($ui, $notesEdit, $ignoreEscape)
 _GUICtrlTab_ActivateTab($g_categoryTab, 0)
 
 Local $shuffledCategories = StringSplit("影月谷|北风苔原|自定义二|冬泉谷|西部荒野|赞加沼泽|死亡骑士|主城|黑海岸|艾尔文森林|地狱火半岛|龙骨荒野|泰达希尔|湿地|达纳苏斯|暮色森林|灰谷|嚎风峡湾|纳格兰|希利苏斯", "|", 2)
+ResetCategoryGroups()
 RefreshCategoryGrid($shuffledCategories)
 CheckGroupOrder(0, "所有|自定义二|主城|达纳苏斯")
 CheckGroupOrder(1, "艾尔文森林|西部荒野|湿地|暮色森林")
 CheckGroupOrder(2, "泰达希尔|黑海岸|灰谷|冬泉谷|希利苏斯")
 CheckGroupOrder(3, "地狱火半岛|赞加沼泽|纳格兰|影月谷")
 CheckGroupOrder(4, "死亡骑士|嚎风峡湾|北风苔原|龙骨荒野")
+ResetCategoryGroups()
 RefreshCategoryGrid($categories)
 
 If GUICtrlRead($authorLabel) <> "作者：shan.he" Then Fail("about author missing")
-Local $tagNames[13] = ["v0.1", "v0.2", "v0.3", "v0.4", "v0.4.1", "v0.4.2", "v0.4.3", "v0.4.4", "v0.5", "v0.5.1", "v0.5.2", "v0.5.3", "v0.5.4"]
+Local $tagNames[14] = ["v0.1", "v0.2", "v0.3", "v0.4", "v0.4.1", "v0.4.2", "v0.4.3", "v0.4.4", "v0.5", "v0.5.1", "v0.5.2", "v0.5.3", "v0.5.4", "v0.5.5"]
 For $i = 0 To UBound($tagNames) - 1
     If StringInStr(GUICtrlRead($notesEdit), $tagNames[$i] & @CRLF) = 0 Then Fail("about release notes missing: " & $tagNames[$i])
 Next
